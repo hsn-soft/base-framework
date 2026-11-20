@@ -2,7 +2,7 @@ using Edx.Shared.Efatura.Envelope;
 using HsnSoft.Base.BlobStoring;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>Where the envelopes are kept: one container of the blob store, <c>received/</c> for what was handed to the center and <c>center/</c> for what it made, by month and day.</summary>
 public sealed class EnvelopeStorage(IBlobStore blobs, IOptions<CenterOptions> options)

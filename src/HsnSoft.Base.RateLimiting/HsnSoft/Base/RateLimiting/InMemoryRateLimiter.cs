@@ -15,7 +15,7 @@ public sealed class InMemoryRateLimiter(TimeProvider? time = null) : IRateLimite
     private const int SweepEvery = 1024;
 
     private readonly TimeProvider _time = time ?? TimeProvider.System;
-    private readonly Dictionary<string, Window> _windows = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Window> _windows = [with(StringComparer.Ordinal)];
     private readonly Lock _gate = new();
     private int _requests;
 

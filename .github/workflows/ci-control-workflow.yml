@@ -44,7 +44,7 @@ jobs:
             -   name: Setup .NET
                 uses: actions/setup-dotnet@v5
                 with:
-                    dotnet-version: '10.0.x'
+                    dotnet-version: '11.0.x'
 
             -   name: Cache NuGet
                 uses: actions/cache@v5
@@ -61,6 +61,7 @@ jobs:
                     ./scripts/ci-detector/ci-check-test-project-exist.sh;
                     ./scripts/ci-detector/ci-check-referenced-files.sh;
                     python3 scripts/ci-detector/ci-force-csproj-order.py;
+                    python3 scripts/ci-detector/ci-check-host-namespaces.py;
                     python3 scripts/ci-detector/ci-force-framework-references-rules.py;
                     python3 -m unittest discover -s scripts/versioning -p "test_*.py"'
 
@@ -114,7 +115,7 @@ jobs:
             -   name: Setup .NET
                 uses: actions/setup-dotnet@v5
                 with:
-                    dotnet-version: '10.0.x'
+                    dotnet-version: '11.0.x'
 
             -   name: Cache NuGet
                 uses: actions/cache@v5
@@ -171,7 +172,7 @@ jobs:
             -   name: Setup .NET
                 uses: actions/setup-dotnet@v5
                 with:
-                    dotnet-version: '10.0.x'
+                    dotnet-version: '11.0.x'
 
             -   name: Cache NuGet
                 uses: actions/cache@v5

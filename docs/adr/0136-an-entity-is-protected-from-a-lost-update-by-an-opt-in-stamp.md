@@ -1,6 +1,6 @@
 # ADR-0136: An entity is protected from a lost update by an opt-in stamp (`IHasConcurrencyStamp`), in EF Core and in MongoDB
 
-- **Status:** Accepted
+- **Status:** Accepted; a record that is not there is a 404, not a 409, and the exception is `RepositoryException` ([ADR-0162](0162-a-repository-write-says-what-it-did-and-fails-with-one-exception-that-names-the-records.md))
 - **Date:** 2026-11-03
 
 ## Context

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Hsx.TextNormalizerService.Http.Host.Controllers.Base;
+namespace Hsx.TextNormalizerService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the text normalizer service is: a web api controller of the area <c>text-normalizer-service</c> that answers JSON and needs a valid JWT bearer token (a controller that must be open says so with <c>[AllowAnonymous]</c>).

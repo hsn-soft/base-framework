@@ -1,4 +1,4 @@
-namespace Abc.CommercialWeb.Host.Models;
+namespace Abc.CommercialWeb.Models;
 
 public sealed class UserItem
 {

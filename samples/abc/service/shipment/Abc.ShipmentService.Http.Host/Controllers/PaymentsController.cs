@@ -2,11 +2,11 @@ using Abc.ShipmentService.Application.Contracts.PaymentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.PaymentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.PaymentDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.PaymentDomain.Services;
-using Abc.ShipmentService.Http.Host.Controllers.Base;
+using Abc.ShipmentService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ShipmentService.Http.Host.Controllers;
+namespace Abc.ShipmentService.Controllers;
 
 /// <summary>The payments: every action only calls the application service, which holds the rules.</summary>
 [Route("api/shipment-service/v1/commercial/payments")]

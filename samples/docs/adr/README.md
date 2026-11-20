@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0072](0072-the-root-namespace-of-a-sample-host-is-the-name-of-its-project-without-the-host-suffix.md) | The root namespace of a sample host is the name of its project without the host suffix | Accepted | 2026-11-11 |
 | [0071](0071-hsx-keeps-the-refresh-token-of-a-mobile-client-in-the-body-and-reads-a-blank-tenant-as-the-system-tenant.md) | Hsx keeps the refresh token of a mobile client in the body and reads a blank tenant as the system tenant | Accepted | 2026-11-06 |
 | [0070](0070-hsx-has-the-clients-the-token-of-a-machine-and-the-protection-of-the-auth-server.md) | Hsx has the clients, the token of a machine and the protection of the auth server | Accepted | 2026-11-06 |
 | [0069](0069-hsx-reads-the-sign-in-audit-log-as-the-production-identity-does.md) | Hsx reads the sign-in audit log as the production identity does | Accepted | 2026-11-06 |

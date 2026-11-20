@@ -2,11 +2,11 @@ using Abc.ProductService.Application.Contracts.ProductStockHistoryDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductStockHistoryDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductStockHistoryDomain.Dtos.Submits;
 using Abc.ProductService.Application.Contracts.ProductStockHistoryDomain.Services;
-using Abc.ProductService.Http.Host.Controllers.Base;
+using Abc.ProductService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ProductService.Http.Host.Controllers;
+namespace Abc.ProductService.Controllers;
 
 /// <summary>The stock history of the products (kept in its own MongoDB): every action only calls the application service, which holds the rules.</summary>
 [Route("api/product-service/v1/commercial/product-stock-histories")]

@@ -4,7 +4,7 @@ using System.Text;
 using HsnSoft.Base.Authentication;
 using Microsoft.Extensions.Options;
 
-namespace Hsx.AuthServer.Host.Security.Clients;
+namespace Hsx.AuthServer.Security.Clients;
 
 /// <summary>
 /// The clients of the auth server, kept in memory from the section <c>Auth:Clients</c> and checked when the host starts (a setting that cannot be right stops it, with a message that names the client): an id is not empty and not repeated, a client that needs a secret has one,
@@ -27,7 +27,7 @@ public sealed class ClientRegistry
 
         _time = time ?? throw new ArgumentNullException(nameof(time));
         List<ClientOptions> clients = configuration.GetSection(SectionName).Get<List<ClientOptions>>() ?? [];
-        _clients = new Dictionary<string, ClientOptions>(StringComparer.OrdinalIgnoreCase);
+        _clients = [with(StringComparer.OrdinalIgnoreCase)];
         foreach (ClientOptions client in clients)
         {
             Validate(client, jwt.Value.IssuedAudiences);

@@ -23,6 +23,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Concurrency` | How many run at once in every pod: a named semaphore with leases that end by themselves, and the in-memory limiter ([docs](Concurrency.md)) | Core |
 | `HsnSoft.Base.Concurrency.StackExchangeRedis` | The limiter for a cluster on Redis: one atomic script, the clock of Redis | Concurrency |
 | `HsnSoft.Base.Concurrency.AspNetCore` | `[ConcurrencyLimit]` and `RequireConcurrencyLimit`: 429 with `Retry-After` when the places are taken | Concurrency |
+| `HsnSoft.Base.Concurrency.EventBus` | A place of a concurrency limit travels with an event: an endpoint with `HandOff` takes it and answers, the handler keeps it alive and gives it back (a job that does not overlap itself and does not hold a request open) | Concurrency, EventBus |
 | `HsnSoft.Base.RateLimiting` | How many requests a caller may make in a window, in every pod: a counter per caller, and the in-memory limiter ([docs](RateLimiting.md)) | Core |
 | `HsnSoft.Base.RateLimiting.StackExchangeRedis` | The limiter for a cluster on Redis: one atomic script per request, the clock of Redis | RateLimiting |
 | `HsnSoft.Base.RateLimiting.AspNetCore` | `[RateLimit]`, `RequireRateLimit` and `UseBaseRateLimiting`: 429 with `Retry-After` when a caller is over its limit | RateLimiting |

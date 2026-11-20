@@ -1,13 +1,13 @@
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos.Filters;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Services;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Base;
+using Edx.Integration.FirmInvoice.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers;
+namespace Edx.Integration.FirmInvoice.Controllers;
 
 /// <summary>The queue: what was sent and what became of it. A sender asks by the id of the queue item it was given, or by the uuid of the invoice; the back office lists it. A caller sees only its own tenant's.</summary>
 [Route("api/firm-invoice-service/v1/commercial/queue")]

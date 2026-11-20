@@ -1,6 +1,6 @@
 # ADR-0038: Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request
 
-- **Status:** Accepted (see also [ADR-0039](0039-guard-and-translating-a-response-body.md): `Guard`, and translating a text in a response body)
+- **Status:** Accepted; the order of the language of a request (the claim before the header) is replaced by [ADR-0160](0160-the-header-of-the-request-chooses-the-language-before-the-claim-of-the-token.md): the header first (see also [ADR-0039](0039-guard-and-translating-a-response-body.md): `Guard`, and translating a text in a response body)
 - **Date:** 2026-10-25
 
 ## Context

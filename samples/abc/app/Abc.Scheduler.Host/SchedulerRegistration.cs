@@ -1,6 +1,6 @@
 using Quartz;
 
-namespace Abc.Scheduler.Host;
+namespace Abc.Scheduler;
 
 internal static class SchedulerRegistration
 {

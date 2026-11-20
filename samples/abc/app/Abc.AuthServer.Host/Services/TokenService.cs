@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Abc.AuthServer.Host.Security;
+using Abc.AuthServer.Security;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.MultiTenancy;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Abc.AuthServer.Host.Services;
+namespace Abc.AuthServer.Services;
 
 public sealed record AccessToken(string Value, int ExpiresInSeconds);
 

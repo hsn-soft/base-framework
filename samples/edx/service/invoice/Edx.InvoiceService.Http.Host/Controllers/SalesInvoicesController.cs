@@ -2,13 +2,13 @@ using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Dtos;
 using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Dtos.Filters;
 using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Dtos.Submits;
 using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Services;
-using Edx.InvoiceService.Http.Host.Controllers.Base;
+using Edx.InvoiceService.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.InvoiceService.Http.Host.Controllers;
+namespace Edx.InvoiceService.Controllers;
 
 /// <summary>
 /// The invoices of a tenant, from the draft on, with every kind of permission at work. The attribute of each action is its endpoint permission (403 when the role was not granted it). What the role may see and how much it may see or approve are asked inside the application

@@ -13,7 +13,8 @@ changes one place, not the other. This page says what each setting changes and w
 | **Graylog or file** | `PersistentLogger:LogLevel` | `Information` | the lowest level kept, for every category that has no override. **Never below Information** |
 | **Graylog or file** | `PersistentLogger:LevelOverrides:<Namespace>` | none | the lowest level kept for that namespace (and below it), instead of `LogLevel`. Never below Information |
 | **Graylog or file** | `PersistentLogger:PlatformMinimumLevel` | `Warning` | the lowest level kept for the platform's logs (ASP.NET Core, drivers, any library) whose namespace no override names |
-| **Which one** | `PersistentLogger:IsGrayLogActive` | `false` | `true`: what is kept goes to **Graylog**; `false`: to the **file** `PersistentLogger:FilePath`. Never both |
+| **Which one** | `PersistentLogger:IsGrayLogActive` | `false` | `true`: what is kept goes to **Graylog**; `false`: to the **file** `PersistentLogger:FilePath` when `PersistentLogger:IsFileLogActive` is `true` (by default in the Development environment only; elsewhere nothing is kept and the console is the log). Never both |
+| **The file** | `PersistentLogger:IsFileLogActive` | on in `Development`, off elsewhere | with Graylog off: `true` writes the **file** `PersistentLogger:FilePath`, `false` keeps nothing (the console is the log). Not given: the environment decides. The path must be writable (a container with a read only root file system needs a mount there) |
 | *(neither)* | `PersistentLogger:IsSelfLogActive` | `false` | the logging library's own errors (Graylog cannot be reached, a sink broke) are written to the error output. It does not change which logs are written |
 
 A namespace rule counts for the namespace and everything below it, the longest rule that fits wins, and the name of the category is the class that wrote the log.

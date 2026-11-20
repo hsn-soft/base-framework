@@ -4,11 +4,11 @@ using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/companies")]
 public sealed class CompaniesController(ICompanyAppService companies) : BaseServiceController

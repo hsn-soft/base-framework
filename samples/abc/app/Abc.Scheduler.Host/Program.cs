@@ -1,4 +1,4 @@
-using Abc.Scheduler.Host;
+using Abc.Scheduler;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;

@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Domain.Repositories;
 
 namespace HsnSoft.Base.Domain.Entities;
 
@@ -30,12 +31,7 @@ public static class ConcurrencyConflict
     /// <summary>The key of the text the client reads (<c>Concurrency:Conflict</c>).</summary>
     public const string MessageKey = "Concurrency:Conflict";
 
-    public static BaseHttpException For(string entityName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(entityName);
-
-        BaseHttpException exception = new(409, $"{entityName} was changed or removed by someone else after it was read.");
-        exception.WithKey(MessageKey, entityName);
-        return exception;
-    }
+    /// <summary>The conflict of one entity type; <see cref="RepositoryException.Conflict"/> says which records too.</summary>
+    public static RepositoryException For(string entityName)
+        => RepositoryException.Conflict(entityName);
 }

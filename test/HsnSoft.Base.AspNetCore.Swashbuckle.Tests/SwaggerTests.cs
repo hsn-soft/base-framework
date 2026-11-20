@@ -33,7 +33,7 @@ public class SwaggerTests
     {
         HttpResponseMessage response = await app.GetTestClient().GetAsync($"/swagger/{name}/swagger.json");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+        return JsonElement.Parse(await response.Content.ReadAsStringAsync()).Clone();
     }
 
     [Theory]

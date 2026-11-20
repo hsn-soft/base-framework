@@ -4,7 +4,7 @@ using Abc.Shared.Localization;
 using Abc.ShipmentService.Application;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.EntityFrameworkCore;
-using Abc.ShipmentService.Http.Host.EventHandlers;
+using Abc.ShipmentService.EventHandlers;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;

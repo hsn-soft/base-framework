@@ -603,7 +603,7 @@ public sealed partial class RequestLoggingMiddleware(
     // one JSON text, not one field per header: Graylog creates a field for every name it sees
     private string Headers(IHeaderDictionary headers, bool isResponse)
     {
-        Dictionary<string, string> shown = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string> shown = [with(StringComparer.OrdinalIgnoreCase)];
         foreach (KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> header in headers)
         {
             shown[header.Key] = HeaderValue(header.Key, header.Value.ToString(), isResponse);

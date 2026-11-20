@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base.Logging.Masking;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
 
 /// <summary>A user signs in through a client (the application it uses).</summary>
 public sealed class LoginDto : ClientRequestDto

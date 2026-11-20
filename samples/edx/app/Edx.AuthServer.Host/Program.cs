@@ -1,5 +1,5 @@
-using Edx.AuthServer.Host.Security;
-using Edx.AuthServer.Host.Services;
+using Edx.AuthServer.Security;
+using Edx.AuthServer.Services;
 using Edx.IdentityService.EntityFrameworkCore;
 using Edx.Shared.Hosting.Http;
 using HsnSoft.Base.AspNetCore;

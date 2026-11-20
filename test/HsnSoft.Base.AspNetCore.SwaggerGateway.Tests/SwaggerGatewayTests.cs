@@ -89,7 +89,7 @@ public class SwaggerGatewayTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(new Uri("http://orders:8080/swagger/v1/swagger.json"), Assert.Single(services.Requests));
-        JsonElement document = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement document = JsonElement.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("http://localhost", document.GetProperty("servers")[0].GetProperty("url").GetString());
         Assert.Equal("Orders", document.GetProperty("info").GetProperty("title").GetString());
     }
@@ -101,7 +101,7 @@ public class SwaggerGatewayTests
 
         HttpResponseMessage response = await app.GetTestClient().GetAsync("/gw/swagger/services/orders/swagger.json");
 
-        JsonElement document = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement document = JsonElement.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("http://localhost/gw", document.GetProperty("servers")[0].GetProperty("url").GetString());
     }
 
@@ -110,7 +110,7 @@ public class SwaggerGatewayTests
     {
         await using WebApplication app = await StartAsync(new Services(), new() { ["SwaggerGateway:PublicOrigin"] = "https://api.example.com/" });
 
-        JsonElement document = JsonDocument.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).RootElement;
+        JsonElement document = JsonElement.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync());
 
         Assert.Equal("https://api.example.com", document.GetProperty("servers")[0].GetProperty("url").GetString());
     }
@@ -124,7 +124,7 @@ public class SwaggerGatewayTests
             ["SwaggerGateway:Services:0:GatewayPathPrefix"] = "/orders/v1",
         });
 
-        JsonElement paths = JsonDocument.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).RootElement.GetProperty("paths");
+        JsonElement paths = JsonElement.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).GetProperty("paths");
 
         // /health is not under /api/orders: this gateway does not forward it, so its document does not show it
         Assert.Equal(["/orders/v1", "/orders/v1/{id}"], paths.EnumerateObject().Select(path => path.Name));
@@ -135,7 +135,7 @@ public class SwaggerGatewayTests
     {
         await using WebApplication app = await StartAsync(new Services(), new() { ["SwaggerGateway:Services:0:GatewayPathPrefix"] = "/orders" });
 
-        JsonElement paths = JsonDocument.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).RootElement.GetProperty("paths");
+        JsonElement paths = JsonElement.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).GetProperty("paths");
 
         Assert.Equal(["/orders/api/orders", "/orders/api/orders/{id}", "/orders/health"], paths.EnumerateObject().Select(path => path.Name));
     }
@@ -165,7 +165,7 @@ public class SwaggerGatewayTests
             using HttpRequestMessage request = new(HttpMethod.Get, "/swagger/services/orders/swagger.json");
             request.Headers.Host = $"client-{index}.example.com";
             using HttpResponseMessage response = await client.SendAsync(request);
-            urls[index] = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("servers")[0].GetProperty("url").GetString()!;
+            urls[index] = JsonElement.Parse(await response.Content.ReadAsStringAsync()).GetProperty("servers")[0].GetProperty("url").GetString()!;
         }
 
         // the cache of a client who sends a new Host each time would have grown by one document each; it has the one document of the service

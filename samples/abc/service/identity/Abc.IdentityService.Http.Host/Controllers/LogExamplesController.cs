@@ -1,9 +1,9 @@
-using Abc.IdentityService.Http.Host.Controllers.Base;
+using Abc.IdentityService.Controllers.Base;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.IdentityService.Http.Host.Controllers;
+namespace Abc.IdentityService.Controllers;
 
 /// <summary>A class that is logged as a whole (<c>{@Order}</c>): what is marked <c>[SensitiveData]</c> in it is hidden in the log, by the class itself.</summary>
 public sealed class ExampleOrder

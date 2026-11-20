@@ -13,7 +13,7 @@ namespace HsnSoft.Base.Concurrency;
 public sealed class InMemoryConcurrencyLimiter(TimeProvider? time = null) : IConcurrencyLimiter
 {
     private readonly TimeProvider _time = time ?? TimeProvider.System;
-    private readonly Dictionary<string, Dictionary<Guid, DateTimeOffset>> _holders = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<Guid, DateTimeOffset>> _holders = [with(StringComparer.Ordinal)];
     private readonly Lock _gate = new();
 
     public ValueTask<IConcurrencyLease?> TryAcquireAsync(string name, int maxConcurrent, TimeSpan leaseTime, CancellationToken cancellationToken = default)
@@ -48,6 +48,14 @@ public sealed class InMemoryConcurrencyLimiter(TimeProvider? time = null) : ICon
         }
     }
 
+    public IConcurrencyLease Attach(string name, string holder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(holder);
+
+        return Guid.TryParseExact(holder, "N", out Guid id) ? new Lease(this, name, id) : throw new ArgumentException($"'{holder}' is not the holder of a place of this limiter.", nameof(holder));
+    }
+
     private bool Renew(string name, Guid id, TimeSpan leaseTime)
     {
         DateTimeOffset now = _time.GetUtcNow();
@@ -77,6 +85,8 @@ public sealed class InMemoryConcurrencyLimiter(TimeProvider? time = null) : ICon
     private sealed class Lease(InMemoryConcurrencyLimiter owner, string name, Guid id) : IConcurrencyLease
     {
         public string Name => name;
+
+        public string Holder => id.ToString("N");
 
         public ValueTask<bool> RenewAsync(TimeSpan leaseTime, CancellationToken cancellationToken = default)
         {

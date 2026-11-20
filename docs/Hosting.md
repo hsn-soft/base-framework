@@ -85,16 +85,20 @@ An origin is a scheme, a host and a port with no path; `*` is any origin and **c
 
 `name` is `Service:Name` (else the name of the application), `id` is `APP_ID`, else `POD_NAME`, else `HOSTNAME` (a pod sets `POD_NAME` from its own name), `version` is `BUILD_NUMBER` (else the version of the assembly).
 
+## Nothing for a search engine: `MapBaseRobots()`
+
+A host that is open to the internet and has nothing for a search engine (a gateway, an auth server, a host of scripts, a login page) calls `MapBaseRobots()`: `GET /robots.txt` answers `User-agent: *` and `Disallow: /` as plain text, for anyone. It is a request to well-behaved crawlers, **not a protection**: what must not be reached needs authentication. A host that wants to be crawled does not call it, and maps its own file. A host that has no server code (a single page app behind nginx) answers the same text from its own configuration ([ADR-0161](adr/0161-a-host-open-to-the-internet-that-has-nothing-for-a-search-engine-answers-robots-with-one-call.md)).
+
 ## The thread pool
 
 `Hosting:ThreadPool` raises the minimum threads the pool has ready (`MinWorkerThreads`, `MinCompletionPortThreads`); a value lower than the one in force is ignored and the maximum is never touched.
 
 ## The `.env` file
 
-`AddBaseHosting` reads `.env` from the current folder, then from the folder of the application. It is below the environment variables and above the settings files. A line is `KEY=value` (`export` and quotes
+`AddBaseHosting` reads `.env` from the current folder, then from the folder of the application. It is below the environment variables and above the settings files (`appsettings*.json`, `appsettings.<Environment>.json` too), so a key the settings file has as an empty placeholder is filled by the `.env`, and a developer points the application at the own infrastructure (another port of Redis, another database) in the ignored `.env` without editing a committed settings file; a variable of the platform always wins. A line is `KEY=value` (`export` and quotes
 are accepted, `#` starts a comment); `Scheduler__ApiKey` means `Scheduler:ApiKey`. Never commit one with real values: it is for a developer's machine and a mounted secret.
 
 ## A start that fails says why
 
-`RunBaseAsync` builds the host, checks the settings named with `RequireBaseSettings` (one error with every missing key, never a value), runs the host, and logs a failure of any of these as **critical**
+`RunBaseAsync` builds the host, checks the settings named with `RequireBaseSettings` (one error with every missing key, never a value), runs the host, and logs a failure of any of these as **critical** A host that fails while it starts (a setting checked at start with `ValidateOnStart`, a hosted service that throws) has disposed its services, loggers included, so that reason is written to the standard error and the call still returns 1.
 once, flushes the logs and returns the exit code 1, so the platform restarts the pod and the reason is in the logs.

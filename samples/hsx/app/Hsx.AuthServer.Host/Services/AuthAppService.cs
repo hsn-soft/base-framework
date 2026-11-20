@@ -1,14 +1,14 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Security;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Services;
-using Hsx.AuthServer.Host.Security;
-using Hsx.AuthServer.Host.Security.Clients;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
+using Hsx.AuthServer.Contracts.AuthDomain.Services;
+using Hsx.AuthServer.Security;
+using Hsx.AuthServer.Security.Clients;
 using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Repositories;
 using Microsoft.Extensions.Options;
 
-namespace Hsx.AuthServer.Host.Services;
+namespace Hsx.AuthServer.Services;
 
 public sealed partial class AuthAppService(
     UserAuthenticator authenticator,

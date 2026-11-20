@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Abc.IdentityService.Http.Host.Controllers.Base;
+namespace Abc.IdentityService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the identity service is: a web api controller of the area <c>identity-service</c> that answers JSON and needs a valid JWT bearer token

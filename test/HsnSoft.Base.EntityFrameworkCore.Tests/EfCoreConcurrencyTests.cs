@@ -87,7 +87,7 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         return doc;
     }
 
-    private static void AssertConflict(BaseHttpException exception)
+    private static void AssertConflict(RepositoryException exception)
     {
         Assert.Equal(409, exception.HttpStatusCode);
         Assert.Equal(ConcurrencyConflict.MessageKey, exception.MessageKey);
@@ -154,7 +154,7 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
             Doc loaded = (await Docs(scope).FindAsync(doc.Id))!;
             loaded.SetConcurrencyStamp(seen);
             loaded.Title = "lost update";
-            AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Docs(scope).UpdateAsync(loaded)));
+            AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Docs(scope).UpdateAsync(loaded)));
         }
 
         await using AsyncServiceScope read = _provider.CreateAsyncScope();
@@ -174,11 +174,11 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         await Docs(first).UpdateAsync(ofFirst);
         ofSecond.Title = "second loses";
 
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Docs(second).UpdateAsync(ofSecond)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Docs(second).UpdateAsync(ofSecond)));
     }
 
     [Fact]
-    public async Task AChange_OfAnEntityThatWasRemoved_Is409()
+    public async Task AChange_OfAnEntityThatWasRemoved_Is404_NotFound()
     {
         Plain plain = new(1, "gone");
         await using AsyncServiceScope scope = _provider.CreateAsyncScope();
@@ -189,7 +189,9 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         }
 
         plain.Title = "still here?";
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Plains(scope).UpdateAsync(plain)));
+        RepositoryException gone = await Assert.ThrowsAsync<RepositoryException>(() => Plains(scope).UpdateAsync(plain));
+        Assert.Equal((RepositoryFailure.NotFound, 404, RepositoryException.NotFoundCode, nameof(Plain)), (gone.Failure, gone.HttpStatusCode, gone.ErrorCode, gone.EntityName));
+        Assert.Equal("1", Assert.Single(gone.Ids));
     }
 
     [Fact]
@@ -215,10 +217,10 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         await using AsyncServiceScope scope2 = _provider.CreateAsyncScope();
         Plain hard = (await Plains(scope2).FindAsync(2))!;
         hard.SetConcurrencyStamp(plain.ConcurrencyStamp);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Plains(scope2).DeleteAsync(hard)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Plains(scope2).DeleteAsync(hard)));
         Doc soft = (await Docs(scope2).FindAsync(doc.Id))!;
         soft.SetConcurrencyStamp(doc.ConcurrencyStamp);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Docs(scope2).DeleteAsync(soft)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Docs(scope2).DeleteAsync(soft)));
     }
 
     [Fact]
@@ -246,7 +248,7 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         }
 
         seen.Title = "stale";
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Docs(reader).UpdateAsync(seen)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Docs(reader).UpdateAsync(seen)));
     }
 
     [Fact]
@@ -264,6 +266,6 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         ofFirst.SaveChanges();
         loadedBySecond.Title = "second loses";
 
-        AssertConflict(Assert.Throws<BaseHttpException>(() => ofSecond.SaveChanges()));
+        AssertConflict(Assert.Throws<RepositoryException>(() => ofSecond.SaveChanges()));
     }
 }

@@ -468,3 +468,6 @@ logs*/
 
 # A private key is a secret: never commit one
 private_key.xml
+
+# Output of the Playwright MCP (snapshots, screenshots, console logs)
+.playwright-mcp/

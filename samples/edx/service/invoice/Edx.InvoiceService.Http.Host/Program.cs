@@ -1,5 +1,5 @@
 using Edx.InvoiceService.Application;
-using Edx.InvoiceService.Http.Host.EventHandlers;
+using Edx.InvoiceService.EventHandlers;
 using Edx.InvoiceService.MongoDB;
 using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;

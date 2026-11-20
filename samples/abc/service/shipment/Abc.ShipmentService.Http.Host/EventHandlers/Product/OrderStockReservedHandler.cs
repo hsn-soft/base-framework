@@ -6,7 +6,7 @@ using Abc.ShipmentService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Abc.ShipmentService.Http.Host.EventHandlers.Product;
+namespace Abc.ShipmentService.EventHandlers.Product;
 
 /// <summary>
 /// The stock of an order was set aside (the product service published it for whoever cares): the customer of the order is made when the service does not know the user yet, the payment is taken, and the service tells itself how it went

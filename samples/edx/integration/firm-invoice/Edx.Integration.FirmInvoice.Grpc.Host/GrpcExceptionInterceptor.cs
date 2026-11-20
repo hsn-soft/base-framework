@@ -2,7 +2,7 @@ using Grpc.Core;
 using Grpc.Core.Interceptors;
 using HsnSoft.Base;
 
-namespace Edx.Integration.FirmInvoice.Grpc.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>
 /// Says what went wrong in the language of gRPC, as the exception handler of the web api does in the language of HTTP: a rule the client broke is <c>InvalidArgument</c> (the code is in the trailer <c>error-code</c>), what is not there is

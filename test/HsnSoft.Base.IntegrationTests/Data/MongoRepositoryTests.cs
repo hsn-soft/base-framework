@@ -414,7 +414,7 @@ public sealed class MongoRepositoryTests(MongoFixture mongo) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AnEntityThatIsNotThere_IsA409_ToUpdateAndToDelete_OneAtATimeAndInBulk()
+    public async Task AnEntityThatIsNotThere_IsA404_NotFound_ToUpdateAndToDelete_OneAtATimeAndInBulk()
     {
         Product neverSaved = new("never", 1);
         await using AsyncServiceScope scope = Scope();
@@ -428,13 +428,14 @@ public sealed class MongoRepositoryTests(MongoFixture mongo) : IAsyncLifetime
             () => products.DeleteManyAsync([neverSaved]),
         })
         {
-            BaseHttpException conflict = await Assert.ThrowsAsync<BaseHttpException>(call);
-            Assert.Equal(409, conflict.HttpStatusCode);
+            RepositoryException gone = await Assert.ThrowsAsync<RepositoryException>(call);
+            Assert.Equal((404, RepositoryFailure.NotFound, nameof(Product)), (gone.HttpStatusCode, gone.Failure, gone.EntityName));
+            Assert.Equal(neverSaved.Id.ToString(), Assert.Single(gone.Ids));
         }
 
         Tag tag = new(Guid.NewGuid(), "plain");
         IRepository<Tag, Guid> tags = scope.ServiceProvider.GetRequiredService<IRepository<Tag, Guid>>();
-        Assert.Equal(409, (await Assert.ThrowsAsync<BaseHttpException>(() => tags.DeleteAsync(tag))).HttpStatusCode);
-        Assert.Equal(409, (await Assert.ThrowsAsync<BaseHttpException>(() => tags.DeleteManyAsync([tag]))).HttpStatusCode);
+        Assert.Equal(404, (await Assert.ThrowsAsync<RepositoryException>(() => tags.DeleteAsync(tag))).HttpStatusCode);
+        Assert.Equal(404, (await Assert.ThrowsAsync<RepositoryException>(() => tags.DeleteManyAsync([tag]))).HttpStatusCode);
     }
 }

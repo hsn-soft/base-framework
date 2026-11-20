@@ -29,7 +29,8 @@ public static class EnvFile
         }
 
         var source = new MemoryConfigurationSource { InitialData = Parse(File.ReadAllLines(file)) };
-        int environment = configuration.Sources.ToList().FindIndex(item => item is EnvironmentVariablesConfigurationSource);
+        // the LAST source of variables: a web application builder has more than one (the prefixed ones of the host come first, before the settings files), and the file belongs below the variables of the application and above its settings files
+        int environment = configuration.Sources.ToList().FindLastIndex(item => item is EnvironmentVariablesConfigurationSource);
         if (environment >= 0)
         {
             configuration.Sources.Insert(environment, source);

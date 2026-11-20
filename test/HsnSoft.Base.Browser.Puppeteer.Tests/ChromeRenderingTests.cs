@@ -459,4 +459,106 @@ public sealed class ChromeRenderingTests : IDisposable
 
         await Assert.ThrowsAnyAsync<Exception>(() => running);
     }
+
+    [Fact]
+    public async Task TheFunctionsOfARequest_RunInThePageAfterItsScripts_EachWithItsOwnResult()
+    {
+        if (Renderer() is not { } renderer)
+        {
+            return;
+        }
+
+        await using (renderer)
+        {
+            (string address, _) = Serve(context => Html(context, "<html><body><h1>Title</h1><p id=a>one</p><p>two</p><script>document.querySelector('h1').innerText = 'Built';</script></body></html>"));
+
+            RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(address)) with
+            {
+                Scripts = new Dictionary<string, string>
+                {
+                    ["title"] = "() => Array.from(document.querySelectorAll('h1'), e => e.innerText)",
+                    ["details"] = "() => Array.from(document.querySelectorAll('p'), e => ({ targetText: e.innerText }))",
+                    ["nothing"] = "() => undefined",
+                    ["broken"] = "() => { throw new Error('the page says no'); }",
+                    ["syntax"] = "not a function",
+                },
+            });
+
+            Assert.Equal("Built", page.ScriptResults!["title"].Value!.Value[0].GetString());
+            Assert.Equal(["one", "two"], page.ScriptResults["details"].Value!.Value.EnumerateArray().Select(item => item.GetProperty("targetText").GetString()));
+            Assert.Null(page.ScriptResults["nothing"].Value);
+            Assert.True(page.ScriptResults["nothing"].IsSuccess);
+            Assert.Contains("the page says no", page.ScriptResults["broken"].Error, StringComparison.Ordinal);
+            Assert.False(page.ScriptResults["syntax"].IsSuccess);   // a function that does not work does not fail the call, nor the ones after it
+        }
+    }
+
+    [Fact]
+    public async Task WhatTheRequestLeavesUnloaded_IsNeverAskedFor_AndTheDocumentIsAlwaysLoaded()
+    {
+        if (Renderer() is not { } renderer)
+        {
+            return;
+        }
+
+        await using (renderer)
+        {
+            (string address, List<string> seen) = Serve(async context =>
+            {
+                switch (context.Request.Url!.AbsolutePath)
+                {
+                    case "/style.css":
+                        context.Response.ContentType = "text/css";
+                        await context.Response.OutputStream.WriteAsync("body { color: red }"u8.ToArray());
+                        context.Response.Close();
+                        break;
+                    case "/app.js":
+                        context.Response.ContentType = "text/javascript";
+                        await context.Response.OutputStream.WriteAsync("document.title = 'ran';"u8.ToArray());
+                        context.Response.Close();
+                        break;
+                    default:
+                        await Html(context, "<html><head><link rel=stylesheet href=/style.css><script src=/app.js></script></head><body>page</body></html>");
+                        break;
+                }
+            });
+
+            RenderedPage plain = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(address)) with { WaitUntil = WaitCondition.Load });
+            string[] first = [.. seen];
+            seen.Clear();
+            RenderedPage left = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(address)) with { WaitUntil = WaitCondition.Load, BlockedResources = BrowserResources.Stylesheets | BrowserResources.Scripts });
+
+            Assert.Contains("/style.css", first);
+            Assert.Contains("/app.js", first);
+            Assert.Equal("ran", plain.Title);
+            Assert.DoesNotContain("/style.css", seen);
+            Assert.DoesNotContain("/app.js", seen);
+            Assert.Contains("page", left.Html, StringComparison.Ordinal);   // the document was loaded
+            Assert.NotEqual("ran", left.Title);
+        }
+    }
+
+    [Fact]
+    public async Task AStealthPage_IsNotToldByItsBrowserThatItIsDriven_AndWithoutStealthItIs()
+    {
+        if (Renderer() is not { } renderer)
+        {
+            return;
+        }
+
+        await using (renderer)
+        {
+            (string address, _) = Serve(context => Html(context, "<html><body>x</body></html>"));
+            Dictionary<string, string> asks = new() { ["driven"] = "() => navigator.webdriver", ["languages"] = "() => navigator.languages" };
+            BrowserRequest request = BrowserRequest.FromUrl(new Uri(address)) with { Scripts = asks };   // stealth is set when the page is navigated to
+
+            RenderedPage plain = await renderer.GetPageAsync(request);
+            RenderedPage hidden = await renderer.GetPageAsync(request with { Stealth = true, DisableCache = true });
+
+            Assert.Equal(System.Text.Json.JsonValueKind.True, plain.ScriptResults!["driven"].Value!.Value.ValueKind);
+            Assert.Equal(System.Text.Json.JsonValueKind.False, hidden.ScriptResults!["driven"].Value!.Value.ValueKind);
+            Assert.Equal(["tr-TR", "tr"], hidden.ScriptResults["languages"].Value!.Value.EnumerateArray().Select(item => item.GetString()));
+        }
+    }
 }
+

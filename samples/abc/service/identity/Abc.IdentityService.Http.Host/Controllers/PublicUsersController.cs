@@ -1,12 +1,12 @@
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
-using Abc.IdentityService.Http.Host.Controllers.Base;
+using Abc.IdentityService.Controllers.Base;
 using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.IdentityService.Http.Host.Controllers;
+namespace Abc.IdentityService.Controllers;
 
 /// <summary>
 /// What the public gateway may reach (the <c>public</c> segment of the route): open to everyone, so no token. The commercial gateway maps to the

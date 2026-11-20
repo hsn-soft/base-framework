@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Abc.ProductService.Http.Host.Controllers.Base;
+namespace Abc.ProductService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the product service is: a web api controller of the area <c>product-service</c> that answers JSON and needs a valid JWT bearer token

@@ -3,6 +3,7 @@
 | Where | What |
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: a short guide to the decisions relevant to a task; the [full catalog](adr/INDEX.md) lists every ADR. |
+| [`HowItWorks.md`](HowItWorks.md) | **Read first.** What it is for, how it is used, how it relates to the other parts of the system, what is fixed and what is a setting or data |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
 | [`RateLimiting.md`](RateLimiting.md) | How many requests a caller may make in every pod: `[RateLimit]`, `UseBaseRateLimiting`, the window, the settings, when the store is gone, how the Redis limiter works |
 | [`Concurrency.md`](Concurrency.md) | How many run at once in every pod: `[ConcurrencyLimit]`, the limiter in code, the lease, the settings, how the Redis limiter works |
@@ -20,6 +21,7 @@
 | [`WebApi.md`](WebApi.md) | The web api answers: `BaseResponse`, exceptions, what a client learns of a 500 |
 | [`EventBus.md`](EventBus.md) | The event bus: envelope, wire format, the RabbitMQ topology, failure handling |
 | [`DddBuildingBlocks.md`](DddBuildingBlocks.md) | The entity base classes, the DTOs of paging and the generic repository with its safe sorting |
+| [`DtoProjection.md`](DtoProjection.md) | How a DTO is filled from an entity by the select: the name rules and paths (`CompanyName`), the selector you write for a custom value, `ToDto` for a write |
 | [`EntityConcepts.md`](EntityConcepts.md) | Audit fields, soft delete and tenants of an entity: the interfaces, the current user, the tenant packages, the filters, EF Core and MongoDB |
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
 | [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept |

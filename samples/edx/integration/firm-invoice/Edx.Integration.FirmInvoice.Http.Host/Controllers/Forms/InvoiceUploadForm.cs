@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos.Submits;
 using Edx.Shared.Contracts.Invoicing;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers.Forms;
+namespace Edx.Integration.FirmInvoice.Controllers.Forms;
 
 /// <summary>The form of an upload (multipart): the zip, and what the sender says of it. The same for the API of the customers and for the upload page of the back office.</summary>
 public sealed class InvoiceUploadForm

@@ -1,14 +1,14 @@
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos.Submits;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Services;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Base;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Forms;
+using Edx.Integration.FirmInvoice.Controllers.Base;
+using Edx.Integration.FirmInvoice.Controllers.Forms;
 using Edx.Shared.Contracts.Invoicing;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers;
+namespace Edx.Integration.FirmInvoice.Controllers;
 
 /// <summary>
 /// What the pages of the back office send: the upload page (a zip) and the create page (a model). They take the same path as what a customer sends and are queued by the same service; the route is what tells them apart, so the channel of the invoice is

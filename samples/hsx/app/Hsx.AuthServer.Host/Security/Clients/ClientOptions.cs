@@ -1,4 +1,4 @@
-namespace Hsx.AuthServer.Host.Security.Clients;
+namespace Hsx.AuthServer.Security.Clients;
 
 /// <summary>
 /// A client of the auth server (an application that asks for a token): the back office, the commercial web, a public application that reads static data. The list is the section <c>Auth:Clients</c> of the settings, kept in memory; the secrets are never here, only the hash of each (<c>SecretHashes</c>:

@@ -1,12 +1,12 @@
 using System.Security.Claims;
-using Hsx.CommercialWeb.Host.Models;
-using Hsx.CommercialWeb.Host.Services;
+using Hsx.CommercialWeb.Models;
+using Hsx.CommercialWeb.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Hsx.CommercialWeb.Host.Pages.Account;
+namespace Hsx.CommercialWeb.Pages.Account;
 
 public sealed class LoginModel(GatewayClient gateway) : PageModel
 {

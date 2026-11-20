@@ -1,7 +1,7 @@
 using HsnSoft.Base.Hosting;
 using Hsx.IdentityService.Application.Services;
 
-namespace Hsx.IdentityService.Http.Host;
+namespace Hsx.IdentityService;
 
 /// <summary>
 /// Writes the grants of every role to the store the services read, when the service starts and then every <c>Permissions:SyncMinutes</c> (5). A change is written at once by the endpoint that made it; this makes right a store that was emptied or restarted,

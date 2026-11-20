@@ -127,6 +127,26 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
     private static string Text(BasicGetResult message) => Encoding.UTF8.GetString(message.Body.Span);
 
     [Fact]
+    public async Task TheSubscriberStoppedByManyCallersAtOnce_StopsItsConsumersOnceAndWithoutAnError()
+    {
+        // a host that is stopped by its owner and by what disposes it at the same moment calls StopAsync more than once, at once: each call must find the consumers whole
+        for (int round = 0; round < 25; round++)
+        {
+            await using RunningHost host = await StartAsync(NewExchange(), services =>
+            {
+                services.AddSingleton(new Recorder());
+                services.AddEventHandler<Pinged, RecordingHandler>();
+                services.AddEventHandler<Ponged, FollowUpHandler>();
+            });
+            IHostedService subscriber = host.Services.GetServices<IHostedService>().Single(service => service.GetType().Name == "RabbitMqSubscriber");
+
+            Exception? stopped = await Record.ExceptionAsync(() => Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Run(() => subscriber.StopAsync(CancellationToken.None)))));
+
+            Assert.Null(stopped);
+        }
+    }
+
+    [Fact]
     public async Task PublishedEvent_ReachesTheHandler_WithItsEnvelope_AndTheServiceIsReady()
     {
         string exchange = NewExchange();

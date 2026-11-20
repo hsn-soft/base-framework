@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -21,7 +22,7 @@ public sealed class RabbitMqSubscriber(
     IFailedEventNotifier failedEventNotifier,
     IOptions<EventBusOptions> options,
     IOptions<RabbitMqEventBusConfig> config,
-    ILoggerFactory loggerFactory) : IHostedService
+    ILoggerFactory loggerFactory) : IHostedService, IDisposable
 {
     private readonly IRabbitMqPersistentConnection _connection = connection;
     private readonly IEventBusSubscriptionManager _subscriptions = subscriptions;
@@ -32,31 +33,55 @@ public sealed class RabbitMqSubscriber(
     private readonly ILoggerFactory _loggerFactory = loggerFactory;
     private readonly List<RabbitMqConsumer> _consumers = [];
 
+    // the start adds the consumers one after the other and the stop takes them all: one at a time, so a stop that is called by more than one caller at once (the owner of the host and what disposes it) never enumerates the list while another changes it
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (_subscriptions.IsEmpty)
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return;
-        }
+            if (_subscriptions.IsEmpty)
+            {
+                return;
+            }
 
-        if (!_connection.IsConnected)
-        {
-            await _connection.TryConnectAsync(cancellationToken).ConfigureAwait(false);
-        }
+            if (!_connection.IsConnected)
+            {
+                await _connection.TryConnectAsync(cancellationToken).ConfigureAwait(false);
+            }
 
-        ILogger logger = _loggerFactory.CreateLogger<RabbitMqConsumer>();
-        foreach (IntegrationEventInfo info in _subscriptions.Events)
+            ILogger logger = _loggerFactory.CreateLogger<RabbitMqConsumer>();
+            foreach (IntegrationEventInfo info in _subscriptions.Events)
+            {
+                RabbitMqConsumer consumer = new(_connection, _subscriptions, _dispatcher, _failedEventNotifier, _options, _config, logger, info);
+                _consumers.Add(consumer);
+                await consumer.StartAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
         {
-            RabbitMqConsumer consumer = new(_connection, _subscriptions, _dispatcher, _failedEventNotifier, _options, _config, logger, info);
-            _consumers.Add(consumer);
-            await consumer.StartAsync(cancellationToken).ConfigureAwait(false);
+            _gate.Release();
         }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        // in parallel: one after the other the waits for the messages in flight would add up
-        await Task.WhenAll(_consumers.Select(consumer => consumer.DisposeAsync().AsTask())).ConfigureAwait(false);
-        _consumers.Clear();
+        // a stop that waits for a start in progress stops the consumers that start made; a second stop finds none
+        await _gate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            RabbitMqConsumer[] consumers = [.. _consumers];
+            _consumers.Clear();
+
+            // in parallel: one after the other the waits for the messages in flight would add up
+            await Task.WhenAll(consumers.Select(consumer => consumer.DisposeAsync().AsTask())).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
+
+    public void Dispose() => _gate.Dispose();
 }

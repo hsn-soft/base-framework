@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "Edx.Integration.FirmInvoice.Grpc.Host";
+option csharp_namespace = "Edx.Integration.FirmInvoice";
 
 package edx.firm_invoice.v1;
 

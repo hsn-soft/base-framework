@@ -1,4 +1,4 @@
-namespace Abc.PublicWeb.Host.Models;
+namespace Abc.PublicWeb.Models;
 
 public sealed class UserNameAvailability
 {

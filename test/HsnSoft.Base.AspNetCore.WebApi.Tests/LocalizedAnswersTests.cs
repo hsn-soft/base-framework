@@ -120,7 +120,7 @@ public sealed class LocalizedAnswersTests
 
         HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
         string text = await response.Content.ReadAsStringAsync();
-        return (response, text.Length == 0 ? default : JsonDocument.Parse(text).RootElement.Clone());
+        return (response, text.Length == 0 ? default : JsonElement.Parse(text).Clone());
     }
 
     private static string Message(JsonElement body, int index = 0) => body.GetProperty("statusMessages")[index].GetString()!;
@@ -141,19 +141,27 @@ public sealed class LocalizedAnswersTests
     }
 
     [Fact]
-    public async Task TheLanguageOfTheToken_IsBeforeTheHeader_AndTheHeaderIsBeforeTheDefault()
+    public async Task TheHeader_IsBeforeTheLanguageOfTheToken_AndTheTokenIsBeforeTheDefault()
     {
         await using WebApplication app = await StartAsync();
 
-        (_, JsonElement withToken) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "ru", tokenLocale: "tr-TR");
-        (_, JsonElement withHeader) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "ru");
+        (_, JsonElement headerAndToken) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "ru", tokenLocale: "tr-TR");
+        (_, JsonElement onlyHeader) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "ru");
+        (_, JsonElement onlyToken) = await GetAsync(app, "/api/localized/missing", tokenLocale: "tr-TR");
         (_, JsonElement withNothing) = await GetAsync(app, "/api/localized/missing");
+        (_, JsonElement unsupportedHeader) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "de-DE,fr;q=0.8", tokenLocale: "tr");
         (_, JsonElement unsupportedToken) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "tr", tokenLocale: "de");
+        (_, JsonElement unsupportedBoth) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "de", tokenLocale: "fr");
+        (_, JsonElement unsupportedHeaderNoToken) = await GetAsync(app, "/api/localized/missing", acceptLanguage: "de");
 
-        Assert.Equal("7 numaralı sipariş bulunamadı.", Message(withToken));
-        Assert.Equal("Заказ 7 не найден.", Message(withHeader));
+        Assert.Equal("Заказ 7 не найден.", Message(headerAndToken));
+        Assert.Equal("Заказ 7 не найден.", Message(onlyHeader));
+        Assert.Equal("7 numaralı sipariş bulunamadı.", Message(onlyToken));
         Assert.Equal("Order 7 was not found.", Message(withNothing));
-        Assert.Equal("7 numaralı sipariş bulunamadı.", Message(unsupportedToken));
+        Assert.Equal("7 numaralı sipariş bulunamadı.", Message(unsupportedHeader));   // a header with no supported language is no header: the token counts
+        Assert.Equal("7 numaralı sipariş bulunamadı.", Message(unsupportedToken));   // the header says tr, the token's de is no language
+        Assert.Equal("Order 7 was not found.", Message(unsupportedBoth));
+        Assert.Equal("Order 7 was not found.", Message(unsupportedHeaderNoToken));
     }
 
     [Theory]
@@ -251,13 +259,15 @@ public sealed class LocalizedAnswersTests
     }
 
     [Fact]
-    public async Task TheLanguageOfTheTokenReachesTheOuterHandlers_ThatTheMiddlewareDoesNot()
+    public async Task TheLanguageOfTheRequestReachesTheOuterHandlers_ThatTheMiddlewareDoesNot()
     {
         await using WebApplication app = await StartAsync();
 
         (_, JsonElement status) = await GetAsync(app, "/api/nowhere", tokenLocale: "ru");
+        (_, JsonElement headerWins) = await GetAsync(app, "/api/nowhere", acceptLanguage: "tr", tokenLocale: "ru");
 
         Assert.Equal("Ресурс не найден.", Message(status));
+        Assert.Equal("Kaynak bulunamadı.", Message(headerWins));
     }
 
     [Fact]

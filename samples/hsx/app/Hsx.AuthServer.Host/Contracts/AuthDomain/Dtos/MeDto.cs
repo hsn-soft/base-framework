@@ -1,6 +1,6 @@
 using HsnSoft.Base.Application.Dtos;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Dtos;
 
 public sealed class MeDto : IBaseDto
 {

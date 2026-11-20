@@ -2,7 +2,7 @@ using System.Threading.RateLimiting;
 using HsnSoft.Base.AspNetCore.Responses;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace Hsx.AuthServer.Host.Security.RateLimiting;
+namespace Hsx.AuthServer.Security.RateLimiting;
 
 public static class RateLimitingExtensions
 {

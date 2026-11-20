@@ -12,6 +12,8 @@ paths:
 - **Read the XML documentation of PuppeteerSharp before giving it a condition or an option** (`~/.nuget/packages/puppeteersharp/<version>/lib/net10.0/PuppeteerSharp.xml`): some values are accepted and ignored. `SetContent` does not support `Networkidle0`/`Networkidle2` (ADR-0154); for HTML the renderer waits for `Load` and then calls `WaitForNetworkIdleAsync` when the request wants `NetworkIdle`; for an address the condition goes to `GoToAsync` as it is.
 - A call that can wait has a bounded time (`OperationTimeoutSeconds`, the timeout of the request) and ends in a `TimeoutException`, never in a wait without end; a place in the pool is always given back.
 - The tests of the real Chrome (`ChromeRenderingTests`) do nothing where no Chrome is installed (`HSN_TEST_CHROME`); the CI runner has one, so they run there: they must pass on a slow two-core machine (see `testing-ci.md`), and a failure that does not happen locally is read from the log of the run, not run again until it is green.
+- **A request may run functions in the page, leave kinds of resources unloaded and set the stealth** (`Scripts`, `BlockedResources`, `Stealth`, `DisableCache`, ADR-0156): the policy decides first and the flags only refuse more, a function that fails is a result and not an exception, and a function is the caller's own code, never a customer's input.
+- **Chrome is downloaded only when `Browser:DownloadWhenMissing` is on and the process is not in a container** (the renderer detects the container itself; the flag never overrides it): a Chrome that is there is always used first, and no other code path downloads a browser (ADR-0165).
 - Keep [docs/Browser.md](../../docs/Browser.md) and the settings table in step with the code.
 
-Relevant decisions: ADR-0141, ADR-0154.
+Relevant decisions: ADR-0141, ADR-0154, ADR-0156, ADR-0165.

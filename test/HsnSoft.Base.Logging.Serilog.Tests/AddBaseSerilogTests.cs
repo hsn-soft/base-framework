@@ -21,11 +21,34 @@ public sealed class AddBaseSerilogTests : IDisposable
         => new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["environment"] = "Development",   // the file is written in the Development environment only
                 ["PersistentLogger:FilePath"] = Path.Combine(_directory, "service.txt"),
                 ["PersistentLogger:LogLevel"] = "Verbose",
             })
             .AddInMemoryCollection(settings.ToDictionary(setting => setting.Key, setting => (string?)setting.Value))
             .Build();
+
+    [Fact]
+    public void OutsideDevelopment_WithoutGraylog_NoFileIsMade_AndTheConsoleStillLogs()
+    {
+        using ServiceProvider provider = Build(Configuration(("environment", "docker")));
+
+        provider.GetRequiredService<ILoggerFactory>().CreateLogger("Acme.Orders").LogError("only for the console");
+        provider.Dispose();
+
+        Assert.Empty(Directory.GetFiles(_directory));
+    }
+
+    [Fact]
+    public void OutsideDevelopment_TheSettingCanAskForTheFile()
+    {
+        using ServiceProvider provider = Build(Configuration(("environment", "docker"), ("PersistentLogger:IsFileLogActive", "true")));
+
+        provider.GetRequiredService<ILoggerFactory>().CreateLogger("Acme.Orders").LogError("kept in a file");
+        provider.Dispose();
+
+        Assert.Single(Directory.GetFiles(_directory));
+    }
 
     private static ServiceProvider Build(IConfiguration configuration, Action<LoggerConfiguration>? configure = null, bool replaceGlobalLogger = false)
     {

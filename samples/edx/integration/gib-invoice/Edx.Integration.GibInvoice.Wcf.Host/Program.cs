@@ -1,9 +1,9 @@
 using CoreWCF.Configuration;
 using CoreWCF.Description;
+using Edx.Integration.GibInvoice;
 using Edx.Integration.GibInvoice.Application;
 using Edx.Integration.GibInvoice.Application.Options;
 using Edx.Integration.GibInvoice.MongoDB;
-using Edx.Integration.GibInvoice.Wcf.Host;
 using Edx.Shared.Efatura.Server;
 using Edx.Shared.Hosting.Http;
 using HsnSoft.Base.AspNetCore;

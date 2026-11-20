@@ -9,6 +9,7 @@ The CI runs on the pull request, so a problem costs you a round trip: push, wait
 | `ci_detector_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
 | `ci-check-coverage.py` | the coverage gate: merges the coverage reports and fails below the threshold (`merge_lines` is also used by the summary) |
 | `ci-force-csproj-order.py` | the order of the references in a project file ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)); `--fix` puts them in order |
+| `ci-check-host-namespaces.py` | the root namespace of a host project is its name without the host suffix, and no namespace names the suffix (framework ADR-0158); a test project of a host keeps its own name |
 | `ci-force-framework-references-rules.py` | the reference rules of the framework projects ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) |
 | `ci-summary.py` | the page at the end of a CI run: the time of every step, the test counts, the coverage; with `--badges <folder>` (and `--badge-prefix` for the release branches, [ADR-0116](../../docs/adr/0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md)) also the endpoint files of the README badges ([ADR-0114](../../docs/adr/0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md)) |
 | `ci-publish-badges.sh` | publishes those files to the branch `badges` (a scheduled or manual run on `dev`, and a push to a release branch) |
@@ -48,6 +49,7 @@ The stages are the ones of the CI workflow (`.github/workflows/ci-control-workfl
 | Clean | the detector starts from a clean tree, as the CI does: `scripts/cleaner/` deletes build output, old test results and editor leftovers (never source, never tracked files); its list is in `logs/clean.log`, the screen shows the count | the CI starts from a clean checkout |
 | Every package has a test project | each package under `src/` has a `test/<Package>.Tests` | `Repository Rules` |
 | Project file reference order | the references of every project file are in order ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)) | `Repository Rules` |
+| Host root namespaces | every host project has `<RootNamespace>` set to its name without `.Http.Host`, `.Wcf.Host`, `.Grpc.Host` or `.Host`, and no namespace of the code names the suffix (framework ADR-0158) | `Repository Rules` |
 | Framework project references | every framework project reaches Core and lists nothing a sibling brings ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) | `Repository Rules` |
 | Release scripts (their tests) | the tests of `scripts/versioning/` (the version of a release) pass | `Repository Rules` |
 | Restore | the packages can be restored (once; nothing after it restores again) | `Restore Dependencies` |
@@ -119,6 +121,7 @@ The results are written to `TestResults/detector/` (git ignores it); each run st
 | Coverage gate | the log lists the lines nobody ran (`not covered: file:line`); add a test |
 | Every package has a test project | add `test/<Package>.Tests` |
 | Project file reference order | `python3 scripts/ci-detector/ci-force-csproj-order.py --fix` puts the references in order |
+| Host root namespaces | `python3 scripts/ci-detector/ci-check-host-namespaces.py` names each file and line; set `<RootNamespace>` of the host project and rename the namespaces (the host name without its suffix) |
 | Framework project references | a package of `src/` must reach `Core` and must not list what a sibling brings (ADR-0075): fix the `ProjectReference` the message names |
 
 Like the CI, the test scripts stop at the first failing test project, so the counts of a failed run only cover the projects that ran.

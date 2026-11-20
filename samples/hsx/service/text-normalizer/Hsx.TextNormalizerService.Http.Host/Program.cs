@@ -10,7 +10,7 @@ using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 using Hsx.TextNormalizerService.Application;
 using Hsx.TextNormalizerService.Domain.CustomerContentNormalizedRequestDomain.Entities;
-using Hsx.TextNormalizerService.Http.Host.EventHandlers;
+using Hsx.TextNormalizerService.EventHandlers;
 using Hsx.TextNormalizerService.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

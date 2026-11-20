@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -17,11 +18,38 @@ namespace HsnSoft.Base.Browser.Puppeteer;
 /// </summary>
 public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncDisposable
 {
+    // what a driven Chrome gives away, set as a person's Chrome has it (the script of the previous system, which the sites it read answered)
+    private const string StealthScript = """
+        () => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => false });
+            Object.defineProperty(navigator, 'languages', { get: () => ['tr-TR', 'tr'] });
+            window.chrome = { runtime: {} };
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) =>
+                parameters.name === 'notifications'
+                    ? Promise.resolve({ state: Notification.permission })
+                    : originalQuery(parameters);
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4] });
+            Object.defineProperty(navigator, 'mimeTypes', { get: () => [1, 2, 3] });
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+            Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+            Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+            const getParameter = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                if (parameter === 37445) return 'Intel Inc.';
+                if (parameter === 37446) return 'Intel(R) HD Graphics 630';
+                return getParameter.call(this, parameter);
+            };
+        }
+        """;
+
     private readonly PuppeteerOptions _options;
     private readonly BrowserUrlPolicy _policy;
     private readonly ILogger<PuppeteerBrowserRenderer> _logger;
     private readonly SemaphoreSlim _slots;
     private readonly SemaphoreSlim _launch = new(1, 1);
+    private readonly BrowserExecutable _executable;
     private readonly CancellationTokenSource _stopping = new();
     private IBrowser? _browser;
     private int _rendered;
@@ -29,6 +57,11 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
     private int _disposed;
 
     public PuppeteerBrowserRenderer(IOptions<PuppeteerOptions> options, ILogger<PuppeteerBrowserRenderer> logger)
+        : this(options, logger, null)
+    {
+    }
+
+    internal PuppeteerBrowserRenderer(IOptions<PuppeteerOptions> options, ILogger<PuppeteerBrowserRenderer> logger, BrowserExecutable? executable)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
@@ -36,6 +69,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         _options = options.Value;
         _options.Validate();
         _logger = logger;
+        _executable = executable ?? new BrowserExecutable(_options, logger);
         _slots = new SemaphoreSlim(_options.MaxConcurrentPages, _options.MaxConcurrentPages);
         BrowserUrlPolicyOptions policy = new() { AllowPrivateNetworks = _options.AllowPrivateNetworks };
         foreach (string host in _options.AllowedHosts)
@@ -54,7 +88,8 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         {
             string html = await page.GetContentAsync().ConfigureAwait(false);
             Uri? finalUrl = request.Url is null ? null : new Uri(page.Url);
-            return new RenderedPage(html, finalUrl, response is null ? null : (int)response.Status, await page.GetTitleAsync().ConfigureAwait(false));
+            Dictionary<string, ScriptResult>? scripts = request.Scripts is { Count: > 0 } ? await RunScriptsAsync(page, request.Scripts).ConfigureAwait(false) : null;
+            return new RenderedPage(html, finalUrl, response is null ? null : (int)response.Status, await page.GetTitleAsync().ConfigureAwait(false), scripts);
         }, cancellationToken);
 
     public Task<byte[]> RenderPdfAsync(BrowserRequest request, Base.Browser.PdfOptions? options = null, CancellationToken cancellationToken = default)
@@ -124,6 +159,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         _stopping.Dispose();
         _slots.Dispose();
         _launch.Dispose();
+        _executable.Dispose();
     }
 
     private async Task<T> RunAsync<T>(BrowserRequest request, Func<IPage, IResponse?, Task<T>> take, CancellationToken cancellationToken)
@@ -193,9 +229,25 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
             await page.SetExtraHttpHeadersAsync(request.Headers.ToDictionary(pair => pair.Key, pair => pair.Value)).ConfigureAwait(false);
         }
 
-        // every request of the page, the redirects and what the scripts fetch included, is decided by the policy
+        if (request.DisableCache)
+        {
+            await page.SetCacheEnabledAsync(false).ConfigureAwait(false);
+        }
+
+        if (request.Stealth)
+        {
+            await page.EvaluateFunctionOnNewDocumentAsync(StealthScript).ConfigureAwait(false);
+        }
+
+        if (_options.ProxyServer is { Length: > 0 } && !string.IsNullOrWhiteSpace(_options.ProxyUserName))
+        {
+            await page.AuthenticateAsync(new Credentials { Username = _options.ProxyUserName, Password = _options.ProxyPassword ?? string.Empty }).ConfigureAwait(false);
+        }
+
+        // every request of the page, the redirects and what the scripts fetch included, is decided by the policy and by what the request leaves unloaded
         await page.SetRequestInterceptionAsync(true).ConfigureAwait(false);
-        page.Request += (_, args) => _ = DecideAsync(args.Request, cancellationToken);
+        BrowserResources blocked = request.BlockedResources;
+        page.Request += (_, args) => _ = DecideAsync(args.Request, blocked, cancellationToken);
 
         NavigationOptions navigation = new() { WaitUntil = [WaitFor(request.WaitUntil)], Timeout = (int)TimeSpan.FromSeconds(_options.NavigationTimeoutSeconds).TotalMilliseconds };
         IResponse? response = null;
@@ -223,10 +275,54 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         return await take(page, response).ConfigureAwait(false);
     }
 
-    private Task DecideAsync(IRequest request, CancellationToken cancellationToken)
+    // the kind of a request that is left unloaded when the call says so: never the document of the navigation
+    private static bool IsLeftOut(IRequest request, BrowserResources blocked)
+    {
+        if (blocked == BrowserResources.None || (request.IsNavigationRequest && request.ResourceType == ResourceType.Document))
+        {
+            return false;
+        }
+
+        BrowserResources kind = request.ResourceType switch
+        {
+            ResourceType.Media => BrowserResources.Media,
+            ResourceType.Font => BrowserResources.Fonts,
+            ResourceType.StyleSheet => BrowserResources.Stylesheets,
+            ResourceType.Script => BrowserResources.Scripts,
+            ResourceType.Image => BrowserResources.Images,
+            _ => BrowserResources.None,
+        };
+        return (blocked & kind) != BrowserResources.None;
+    }
+
+    // the functions of a request run in the page, in order, each with its own result: one that fails says why and the others still run
+    private static async Task<Dictionary<string, ScriptResult>> RunScriptsAsync(IPage page, IReadOnlyDictionary<string, string> scripts)
+    {
+        Dictionary<string, ScriptResult> results = [];
+        foreach ((string name, string source) in scripts)
+        {
+            try
+            {
+                JsonElement value = await page.EvaluateFunctionAsync<JsonElement>(source).ConfigureAwait(false);
+                results[name] = new ScriptResult(value.ValueKind == JsonValueKind.Undefined ? null : value, null);
+            }
+            catch (Exception exception) when (exception is PuppeteerException or JsonException or InvalidOperationException)
+            {
+                results[name] = new ScriptResult(null, exception.Message);
+            }
+        }
+
+        return results;
+    }
+
+    private Task DecideAsync(IRequest request, BrowserResources blocked, CancellationToken cancellationToken)
         => GuardedAsync(async () =>
         {
-            if (await _policy.AllowsAsync(request.Url, cancellationToken).ConfigureAwait(false))
+            if (IsLeftOut(request, blocked))
+            {
+                await request.AbortAsync(RequestAbortErrorCode.BlockedByClient).ConfigureAwait(false);
+            }
+            else if (await _policy.AllowsAsync(request.Url, cancellationToken).ConfigureAwait(false))
             {
                 await request.ContinueAsync().ConfigureAwait(false);
             }
@@ -292,10 +388,11 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         }
 
         arguments.AddRange(_options.ExtraArguments);
+        string executablePath = await _executable.ResolveAsync(cancellationToken).ConfigureAwait(false);
         LaunchOptions launch = new()
         {
             Headless = true,
-            ExecutablePath = _options.ExecutablePath,
+            ExecutablePath = executablePath,
             Args = [.. arguments],
             AcceptInsecureCerts = _options.IgnoreCertificateErrors,
             Timeout = (int)TimeSpan.FromSeconds(_options.OperationTimeoutSeconds).TotalMilliseconds,

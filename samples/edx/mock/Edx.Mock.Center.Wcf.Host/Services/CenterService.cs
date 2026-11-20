@@ -1,7 +1,7 @@
 using Edx.Shared.Efatura.Server;
 using Edx.Shared.Efatura.Wire;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// The WCF service of the center (the contract of the real one: <c>sendDocument</c>, <c>getApplicationResponse</c>). It asks the request's own scope for what it needs, hands over to <see cref="EnvelopeIntake"/> and says a refusal as the fault of the center

@@ -1,11 +1,11 @@
 using HsnSoft.Base;
-using Hsx.CommercialWeb.Host.Models;
-using Hsx.CommercialWeb.Host.Services;
+using Hsx.CommercialWeb.Models;
+using Hsx.CommercialWeb.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Hsx.CommercialWeb.Host.Pages;
+namespace Hsx.CommercialWeb.Pages;
 
 public sealed class TenantsModel(GatewayClient gateway) : PageModel
 {

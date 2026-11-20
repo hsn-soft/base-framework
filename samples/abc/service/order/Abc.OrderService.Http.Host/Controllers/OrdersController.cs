@@ -2,11 +2,11 @@ using Abc.OrderService.Application.Contracts.OrderDomain.Dtos;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Filters;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
 using Abc.OrderService.Application.Contracts.OrderDomain.Services;
-using Abc.OrderService.Http.Host.Controllers.Base;
+using Abc.OrderService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.OrderService.Http.Host.Controllers;
+namespace Abc.OrderService.Controllers;
 
 /// <summary>The orders: every action only calls the application service, which holds the rules.</summary>
 [Route("api/order-service/v1/commercial/orders")]

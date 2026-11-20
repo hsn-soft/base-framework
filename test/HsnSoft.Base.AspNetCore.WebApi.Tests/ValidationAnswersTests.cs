@@ -100,7 +100,7 @@ public sealed class ValidationAnswersTests
         request.Headers.TryAddWithoutValidation("Accept-Language", language);
         HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
         string text = await response.Content.ReadAsStringAsync();
-        return (response.StatusCode, JsonDocument.Parse(text).RootElement.Clone());
+        return (response.StatusCode, JsonElement.Parse(text).Clone());
     }
 
     private static string[] Messages(JsonElement body) => [.. body.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()!)];

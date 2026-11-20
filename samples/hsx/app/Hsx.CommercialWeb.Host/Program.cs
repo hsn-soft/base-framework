@@ -2,7 +2,7 @@ using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Http;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
-using Hsx.CommercialWeb.Host.Services;
+using Hsx.CommercialWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 

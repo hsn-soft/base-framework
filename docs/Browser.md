@@ -8,7 +8,7 @@ An application that needs the page after its scripts ran (a scraper), a PDF (an 
 | `HsnSoft.Base.Browser.Puppeteer` | The Chrome implementation (PuppeteerSharp), the settings, the readiness check |
 
 ```csharp
-builder.Services.AddPuppeteerBrowser(builder.Configuration);        // section Browser; ExecutablePath is required
+builder.Services.AddPuppeteerBrowser(builder.Configuration);        // section Browser; ExecutablePath is required (or DownloadWhenMissing on a development machine)
 
 byte[] pdf = await renderer.RenderPdfAsync(BrowserRequest.FromHtml(html), new PdfOptions { Format = PaperFormat.A4 }, cancellationToken);
 RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(address)) with { WaitUntil = WaitCondition.NetworkIdle, WaitForSelector = "#content" }, cancellationToken);
@@ -16,6 +16,21 @@ byte[] png = await renderer.ScreenshotAsync(BrowserRequest.FromUrl(new Uri(addre
 ```
 
 A request has an address (http or https) **or** HTML, not both, and may set the wait condition (`Load`, `DomContentLoaded`, `NetworkIdle`), a selector to wait for, a timeout (1 to 600 seconds), the viewport, a user agent and headers. **With HTML, the wait condition is met in two steps** ([ADR-0154](adr/0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md)): `SetContent` waits for `load` (which comes after `DOMContentLoaded`, so it stands for `Load` and `DomContentLoaded`), and `NetworkIdle` is then waited for apart with `WaitForNetworkIdleAsync`, because PuppeteerSharp ignores the network-idle values in `SetContent` and the wait hung until the timeout of the call on a slow CI runner. With an address the condition goes to `GoToAsync` as it is. A page that cannot be rendered is a `BrowserException`, an address the policy refuses as the page itself is a `BrowserBlockedException`, a call that took longer than its time is a `TimeoutException`.
+
+## Functions in the page, resources left unloaded, stealth (ADR-0156)
+
+```csharp
+RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(address) with
+{
+    BlockedResources = BrowserResources.Media | BrowserResources.Fonts | BrowserResources.Stylesheets,   // the document is always loaded
+    Stealth = true,        // the page is told, before its scripts run, that its browser is not driven (an address only)
+    DisableCache = true,
+    Scripts = new Dictionary<string, string> { ["title"] = "() => Array.from(document.querySelectorAll('h1'), e => e.innerText)" },
+});
+JsonElement? titles = page.ScriptResults!["title"].Value;   // or .Error: a function that fails does not fail the call, nor the ones after it
+```
+
+A function has no argument, runs in the page after it is ready, in the order of the dictionary, and returns what can be written as JSON (`undefined` is no value). It is the caller's own code: never put a customer's input into one. The policy decides first; the flags only refuse more.
 
 ## The policy: what a page may load
 
@@ -31,11 +46,13 @@ A browser resolves a name again when it connects, so a name that changes its ans
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `ExecutablePath` | required | The Chrome or Chromium to start. **It is never downloaded by the application** |
+| `ExecutablePath` | required, unless `DownloadWhenMissing` is on | The Chrome or Chromium to start |
+| `DownloadWhenMissing` | `false` | A Chrome that is not at `ExecutablePath` (or no path) is downloaded once and used. **Only outside a container**: the renderer finds out itself whether it runs in one and never downloads there, whatever this says. For a developer machine ([ADR-0165](adr/0165-a-development-machine-may-download-chrome-when-it-is-missing-and-a-container-never-does.md)) |
+| `DownloadPath` | `{LocalApplicationData}/HsnSoft/browser` | The folder of the download; shared by every application of the machine, so Chrome is fetched once |
 | `DisableSandbox` | `false` | `--no-sandbox`. Chrome refuses to start as root with its sandbox; a container that runs as root has to turn it on, and then the page it renders can reach the machine: run the container as a user that is not root where you can |
 | `DisableDevShmUsage` | `false` | For a container whose `/dev/shm` is small (Docker gives 64 MB) |
 | `IgnoreCertificateErrors` | `false` | Development only |
-| `ProxyServer`, `ExtraArguments` | none | A proxy for every request; more arguments for Chrome |
+| `ProxyServer`, `ProxyUserName`, `ProxyPassword`, `ExtraArguments` | none | A proxy for every request and the user and password it asks for (secrets: from the environment, never in a settings file); more arguments for Chrome |
 | `MaxConcurrentPages` | 4 | The others wait |
 | `WaitForPageSeconds` | 30 | How long a call waits for a place before it is a `TimeoutException` |
 | `OperationTimeoutSeconds` | 60 | The time of a whole call (the request can set its own) |
@@ -45,7 +62,11 @@ A browser resolves a name again when it connects, so a name that changes its ans
 | `ShutdownTimeoutSeconds` | 20 | A stopping host waits this long for the pages being rendered, then ends them |
 | `AllowedHosts`, `AllowPrivateNetworks` | any public host, `false` | The policy |
 
-Chrome is started when the first page is needed, not when the host starts, and again when it is gone. The readiness check (`browser`) is ready when the Chrome of `ExecutablePath` is there; it does not start a browser for a probe.
+Chrome is started when the first page is needed, not when the host starts, and again when it is gone. The readiness check (`browser`) is ready when the Chrome of `ExecutablePath` is there, or when one would be downloaded; it does not start a browser for a probe.
+
+### A development machine
+
+`Browser:DownloadWhenMissing=true` in the settings of the Development environment lets a new machine run with no setup: the first page downloads Chrome (about 150 MB, once) into `DownloadPath`. A container is recognised by `DOTNET_RUNNING_IN_CONTAINER` (the .NET images set it), `IS_IN_DOCKER_CONTAINER`, `KUBERNETES_SERVICE_HOST` or the file `/.dockerenv`; there the flag is ignored and, if `ExecutablePath` is not there, the start fails with the path in the message.
 
 ## In an image
 

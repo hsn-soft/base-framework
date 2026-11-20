@@ -11,7 +11,7 @@ namespace HsnSoft.Base.Domain.Sorting;
 /// </summary>
 public sealed class SortFields<TEntity>
 {
-    private readonly Dictionary<string, SortClauseFactory> _fields = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, SortClauseFactory> _fields = [with(StringComparer.OrdinalIgnoreCase)];
 
     private delegate SortClause<TEntity> SortClauseFactory(bool descending);
 

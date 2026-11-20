@@ -6,7 +6,8 @@ A service that runs in six pods cannot say "this endpoint runs at most twice at 
 |---|---|
 | `HsnSoft.Base.Concurrency` | `IConcurrencyLimiter` and `IConcurrencyLease`, the settings (`Concurrency`), and the in-memory limiter (one process: development, tests, a service of one instance) |
 | `HsnSoft.Base.Concurrency.StackExchangeRedis` | The limiter for a cluster, on the Redis of the service |
-| `HsnSoft.Base.Concurrency.AspNetCore` | `[ConcurrencyLimit]` for a controller action and `RequireConcurrencyLimit` for a minimal api endpoint |
+| `HsnSoft.Base.Concurrency.AspNetCore` | `[ConcurrencyLimit]` for a controller action and `RequireConcurrencyLimit` for a minimal api endpoint, with `HandOff` for a job |
+| `HsnSoft.Base.Concurrency.EventBus` | The place travels with an event: the handler keeps it alive and gives it back ([a job](#a-job-the-endpoint-answers-at-once-and-the-handler-does-the-work)) |
 
 ```csharp
 builder.Services
@@ -35,6 +36,44 @@ if (lease is null) { return; }          // another pod is running it
 ```
 
 A limit of **1** is a lock: a job that must run in one pod at a time.
+
+## A job: the endpoint answers at once and the handler does the work
+
+A job that takes a quarter of an hour must not be a request the caller (the scheduler) waits for, and it must not overlap itself. The endpoint takes the place, publishes **one** event and answers; the handler of the event does the work; **the place is free when the work ends**. Why: [ADR-0159](adr/0159-a-place-of-a-concurrency-limit-is-handed-over-with-an-event-so-a-job-answers-at-once-and-is-over-when-its-handler-is.md).
+
+```csharp
+builder.Services.AddRedisConcurrencyLimiter(builder.Configuration).AddConcurrencyHandoff();   // both halves, in the service that publishes and in the one that handles (often the same)
+
+[HttpPost("jobs/nightly-export")]
+[ConcurrencyLimit("nightly-export", 1, LeaseSeconds = 1200, HandOff = true)]       // the lease is the longest the HANDLER is expected to take
+public async Task<JobAcceptedDto> StartAsync(CancellationToken ct)
+{
+    await eventBus.PublishAsync(new NightlyExportRequestedEto(), cancellationToken: ct);   // the first event takes the place
+    return new JobAcceptedDto();
+}
+
+public sealed class NightlyExportHandler : IIntegrationEventHandler<NightlyExportRequestedEto>
+{
+    public Task HandleAsync(MessageEnvelope<NightlyExportRequestedEto> envelope, CancellationToken ct) { /* the work: a quarter of an hour */ }
+}
+```
+
+| What happens | The place |
+|---|---|
+| The endpoint is called while a run is going | `429` (`concurrency_limit_reached`), as without hand-off |
+| The endpoint publishes and answers | **held**: the event carries it (three `Local-Concurrency*` headers) |
+| The handler works | **kept alive**: the lease is renewed three times in each lease time |
+| The handler ends: handled, rejected, or failed on every attempt | **given back** |
+| The endpoint publishes nothing, or fails | given back by the endpoint (no handler is coming) |
+| The pod of the handler dies | the lease ends by itself: free again |
+| The host stops while the handler works | not given back: the message comes back, or the lease ends |
+| The message is delivered again later | its holder owns nothing by then: it renews nothing and frees nothing |
+
+Only the **first** event of the endpoint carries the place, and the headers are `Local-` (not passed on to the events the handler publishes: `ParentMessageEnvelope.LocalHeaderPrefix`). A handler of the event bus can also watch any handling with an `IEventHandlingObserver` (begin and end of the whole handling of one message, with its outcome). A delivery stays unacknowledged while the handler works: a job longer than the `consumer_timeout` of the broker (RabbitMQ: 30 minutes by default) is delivered again.
+
+## In code, between processes
+
+`limiter.Attach(name, holder)` is the lease of a place that another process took (`lease.Holder` is what travels): renew it, give it back; a place that has ended is not renewed, and giving it back frees nothing of another's.
 
 ## The lease
 

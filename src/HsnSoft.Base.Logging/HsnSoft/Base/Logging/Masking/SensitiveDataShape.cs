@@ -25,7 +25,7 @@ public static class SensitiveDataShape
 
         return s_shapes.GetOrAdd(type, static key =>
         {
-            Dictionary<string, SensitiveDataAttribute> found = new(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, SensitiveDataAttribute> found = [with(StringComparer.OrdinalIgnoreCase)];
             Collect(key, 0, [], found);
             return found;
         });
@@ -36,7 +36,7 @@ public static class SensitiveDataShape
     {
         ArgumentNullException.ThrowIfNull(assembly);
 
-        Dictionary<string, SensitiveDataAttribute> found = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, SensitiveDataAttribute> found = [with(StringComparer.OrdinalIgnoreCase)];
         foreach (Type type in assembly.GetExportedTypes().Where(candidate => candidate.IsClass))
         {
             foreach (KeyValuePair<string, SensitiveDataAttribute> pair in Of(type))

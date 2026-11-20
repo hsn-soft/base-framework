@@ -39,7 +39,7 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
         }
         catch (DbUpdateConcurrencyException exception)
         {
-            throw ConflictOf(exception);
+            throw ConcurrencyFailures.Of(exception);
         }
     }
 
@@ -51,13 +51,10 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
         }
         catch (DbUpdateConcurrencyException exception)
         {
-            throw ConflictOf(exception);
+            // a row that is not there is a 404, one that is not as the entity saw it (changed) a 409: both a RepositoryException, naming the records
+            throw await ConcurrencyFailures.OfAsync(exception, cancellationToken).ConfigureAwait(false);
         }
     }
-
-    // a row that is not as the entity saw it (changed, or removed) is the same answer to the client: 409
-    private static BaseHttpException ConflictOf(DbUpdateConcurrencyException exception)
-        => ConcurrencyConflict.For(exception.Entries.Count > 0 ? exception.Entries[0].Metadata.ClrType.Name : "The record");
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

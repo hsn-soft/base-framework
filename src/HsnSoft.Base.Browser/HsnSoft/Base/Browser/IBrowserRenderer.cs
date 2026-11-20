@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,6 +36,18 @@ public enum WaitCondition
     NetworkIdle,
 }
 
+/// <summary>The kinds of what a page loads that a request may leave unloaded (a page read for its text needs no video, font or style): the document itself is always loaded.</summary>
+[Flags]
+public enum BrowserResources
+{
+    None = 0,
+    Media = 1,
+    Fonts = 2,
+    Stylesheets = 4,
+    Scripts = 8,
+    Images = 16,
+}
+
 /// <summary>What to render: an address (<see cref="Url"/>) or HTML (<see cref="Html"/>), not both.</summary>
 public sealed record BrowserRequest
 {
@@ -61,6 +75,21 @@ public sealed record BrowserRequest
     /// <summary>Headers sent with every request of the page (an <c>Accept-Language</c>); never a user's token to an address from outside.</summary>
     public IReadOnlyDictionary<string, string>? Headers { get; init; }
 
+    /// <summary>What the page does not load (<see cref="BrowserResources.None"/>: everything is loaded). The document is never left out, and a request the policy refuses stays refused.</summary>
+    public BrowserResources BlockedResources { get; init; } = BrowserResources.None;
+
+    /// <summary>The browser does not keep what it loaded between two pages (each page is fetched again).</summary>
+    public bool DisableCache { get; init; }
+
+    /// <summary>The page is told, before its own scripts run, that it is not driven by a robot (the properties a driven browser gives away are those of a person's browser): for a site that answers a robot differently. It is set when the page is navigated to, so it works for an address and not for HTML.</summary>
+    public bool Stealth { get; init; }
+
+    /// <summary>
+    /// Functions that run in the page after it is ready, by name, in this order: each is the source of a JavaScript function that takes no argument (<c>() =&gt; Array.from(document.querySelectorAll('h1'), e =&gt; e.innerText)</c>) and returns what can be written as JSON;
+    /// the result of each is in <see cref="RenderedPage.ScriptResults"/>. A function that fails does not fail the call: its result says why.
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? Scripts { get; init; }
+
     public static BrowserRequest FromUrl(Uri url) => new() { Url = url };
 
     public static BrowserRequest FromHtml(string html) => new() { Html = html };
@@ -83,6 +112,11 @@ public sealed record BrowserRequest
             throw new ArgumentException("The viewport has to be between 100 and 10000 pixels each way.", nameof(BrowserRequest));
         }
 
+        if (Scripts is not null && Scripts.Any(script => string.IsNullOrWhiteSpace(script.Key) || string.IsNullOrWhiteSpace(script.Value)))
+        {
+            throw new ArgumentException("A script has a name and a source.", nameof(BrowserRequest));
+        }
+
         if (TimeoutSeconds is < 1 or > 600)
         {
             throw new ArgumentException("The timeout has to be between 1 and 600 seconds.", nameof(BrowserRequest));
@@ -95,7 +129,14 @@ public sealed record BrowserRequest
 /// <param name="FinalUrl">Where the page ended up after redirects (<see langword="null"/> for HTML that was given).</param>
 /// <param name="StatusCode">The status of the answer that was the page (<see langword="null"/> for HTML that was given).</param>
 /// <param name="Title">The title of the page.</param>
-public sealed record RenderedPage(string Html, Uri? FinalUrl, int? StatusCode, string Title);
+/// <param name="ScriptResults">The result of each function the request asked to run in the page, by name (none when it asked for none).</param>
+public sealed record RenderedPage(string Html, Uri? FinalUrl, int? StatusCode, string Title, IReadOnlyDictionary<string, ScriptResult>? ScriptResults = null);
+
+/// <summary>What a function run in a page returned (<see cref="Value"/>, as JSON) or why it failed (<see cref="Error"/>).</summary>
+public sealed record ScriptResult(JsonElement? Value, string? Error)
+{
+    public bool IsSuccess => Error is null;
+}
 
 /// <summary>The paper sizes of <see cref="PdfOptions"/>.</summary>
 public enum PaperFormat

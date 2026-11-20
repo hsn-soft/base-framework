@@ -3,7 +3,7 @@ namespace Edx.Shared.Hosting.Gateways.Options;
 /// <summary>The services behind a gateway (section <c>ServiceEndpoints</c>), by key (<c>identity-service</c>).</summary>
 public sealed class ServiceEndpointRegistryOptions
 {
-    public Dictionary<string, ServiceEndpointItem> Services { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, ServiceEndpointItem> Services { get; set; } = [with(StringComparer.OrdinalIgnoreCase)];
 }
 
 public sealed class ServiceEndpointItem

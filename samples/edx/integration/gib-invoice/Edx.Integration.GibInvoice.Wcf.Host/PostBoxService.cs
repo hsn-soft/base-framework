@@ -3,7 +3,7 @@ using Edx.Shared.Efatura.Server;
 using Edx.Shared.Efatura.Wire;
 using HsnSoft.Base.MultiTenancy;
 
-namespace Edx.Integration.GibInvoice.Wcf.Host;
+namespace Edx.Integration.GibInvoice;
 
 /// <summary>
 /// The post box of the tenants as a WCF service (the contract of the real center: <c>sendDocument</c>, <c>getApplicationResponse</c>). It asks the request's own scope for what it needs and acts as the system tenant (an envelope that comes in belongs to no tenant until it is read: the owner of the alias

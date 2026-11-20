@@ -4,11 +4,11 @@ using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dt
 using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Filters;
 using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Services;
-using Hsx.ContentService.Http.Host.Controllers.Base;
+using Hsx.ContentService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.ContentService.Http.Host.Controllers;
+namespace Hsx.ContentService.Controllers;
 
 /// <summary>The customer vp settings: every action only calls the application service, which holds the rules.</summary>
 [Route("api/content-service/v1/commercial/customer-content-vp-settings")]

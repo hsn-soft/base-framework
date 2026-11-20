@@ -3,13 +3,13 @@ using Edx.InvoiceService.Application.Contracts.PurchaseInvoiceDomain.Dtos;
 using Edx.InvoiceService.Application.Contracts.PurchaseInvoiceDomain.Dtos.Filters;
 using Edx.InvoiceService.Application.Contracts.PurchaseInvoiceDomain.Dtos.Submits;
 using Edx.InvoiceService.Application.Contracts.PurchaseInvoiceDomain.Services;
-using Edx.InvoiceService.Http.Host.Controllers.Base;
+using Edx.InvoiceService.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.InvoiceService.Http.Host.Controllers;
+namespace Edx.InvoiceService.Controllers;
 
 /// <summary>The invoices issued to the tenant (they came in at its post box). What the role may see and how much are asked inside the application service, as operations and constraints, as for the invoices the tenant sends.</summary>
 [Route("api/invoice-service/v1/commercial/purchase-invoices")]

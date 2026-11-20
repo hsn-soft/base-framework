@@ -2,10 +2,10 @@ using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.MyAccountDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.MyAccountDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.MyAccountDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/my-account")]
 public sealed class MyAccountController(IMyAccountAppService myAccount) : BaseServiceController

@@ -5,7 +5,7 @@ using Edx.Mock.Center.Domain.Participants;
 using HsnSoft.Base.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Mock.Center.Wcf.Host.Controllers;
+namespace Edx.Mock.Center.Controllers;
 
 /// <summary>
 /// The list of the registered users, as the center publishes it (<c>userList</c> of the e-Fatura center): a zip with one XML, <c>UserList</c>, of the taxpayers and their aliases. Integrators take it (the guide says at most once an hour) to know the address of the post box of whoever they send an

@@ -1,13 +1,13 @@
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos.Submits;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Services;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Base;
+using Edx.Integration.FirmInvoice.Controllers.Base;
 using Edx.Shared.Contracts.Invoicing;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers;
+namespace Edx.Integration.FirmInvoice.Controllers;
 
 /// <summary>The models of the shared API a customer sends over REST: the class is the body (it holds the uuid and the number of the invoice), and the service keeps it as a JSON or an XML file and queues it.</summary>
 [Route("api/firm-invoice-service/v1/commercial/models")]

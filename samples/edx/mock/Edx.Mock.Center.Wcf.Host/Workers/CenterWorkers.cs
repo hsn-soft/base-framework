@@ -1,9 +1,9 @@
 using Edx.Mock.Center.Domain.Envelopes;
-using Edx.Mock.Center.Wcf.Host.Services;
+using Edx.Mock.Center.Services;
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Workers;
+namespace Edx.Mock.Center.Workers;
 
 /// <summary>Analyzes the envelopes that were queued (<see cref="EnvelopeAnalyzer"/>), the oldest first.</summary>
 public sealed class AnalyzeWorker(IServiceScopeFactory scopes, IOptions<CenterOptions> options, ILogger<AnalyzeWorker> logger)

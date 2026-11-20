@@ -132,6 +132,35 @@ public sealed class SchedulerAuthTests
     }
 
     [Fact]
+    public async Task AHostThatFailsToStart_ReturnsOne_AndTheReasonIsNotLost()
+    {
+        TextWriter original = Console.Error;
+        using StringWriter captured = new();
+        Console.SetError(captured);
+        try
+        {
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
+            builder.WebHost.UseTestServer();
+            builder.Logging.ClearProviders();
+            builder.Services.AddOptions<StartCheck>().Configure(check => check.Value = 0).Validate(check => check.Value > 0, "the value of the check has to be more than zero").ValidateOnStart();
+
+            int exit = await builder.RunBaseAsync((Action<WebApplication>)(_ => { }));
+
+            Assert.Equal(1, exit);   // not an ObjectDisposedException from the logger of a host that is gone
+            Assert.Contains("the value of the check has to be more than zero", captured.ToString(), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Console.SetError(original);
+        }
+    }
+
+    private sealed class StartCheck
+    {
+        public int Value { get; set; }
+    }
+
+    [Fact]
     public void NullArguments_AreRejected()
     {
         Assert.Throws<ArgumentNullException>(() => SchedulerAuthServiceCollectionExtensions.AddBaseSchedulerAuth(null!, new ConfigurationBuilder().Build()));

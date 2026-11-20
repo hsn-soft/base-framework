@@ -3,7 +3,7 @@ using Edx.Mock.Center.Domain.Participants;
 using Edx.Shared.Efatura.Client;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// Delivers an envelope to the address it was sent to: the alias of the receiver names the service of its integrator, and the zip goes to it with the same <c>sendDocument</c> the center offers. A service that took it is the end of the delivery; one that could not be reached is tried again after a

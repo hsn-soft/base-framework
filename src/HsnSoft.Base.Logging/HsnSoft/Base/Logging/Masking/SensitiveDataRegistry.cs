@@ -10,7 +10,7 @@ namespace HsnSoft.Base.Logging.Masking;
 /// </summary>
 public sealed class SensitiveDataRegistry
 {
-    private readonly Dictionary<string, SensitiveDataAttribute> _keys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, SensitiveDataAttribute> _keys = [with(StringComparer.OrdinalIgnoreCase)];
 
     public IReadOnlyDictionary<string, SensitiveDataAttribute> Keys => _keys;
 

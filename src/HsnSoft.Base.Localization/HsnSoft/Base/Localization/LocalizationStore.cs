@@ -57,7 +57,7 @@ public sealed partial class LocalizationStore
         ArgumentNullException.ThrowIfNull(language);
 
         Loaded loaded = _loaded.Value;
-        Dictionary<string, string> all = new(loaded.Merged[DefaultLanguage]);
+        Dictionary<string, string> all = [with(loaded.Merged[DefaultLanguage])];
         if (loaded.Merged.TryGetValue(language, out FrozenDictionary<string, string>? own))
         {
             foreach (KeyValuePair<string, string> text in own)
@@ -157,7 +157,7 @@ public sealed partial class LocalizationStore
                 throw new InvalidOperationException($"its 'culture' is '{culture}', not '{language}'");
             }
 
-            Dictionary<string, string> texts = new(StringComparer.Ordinal);
+            Dictionary<string, string> texts = [with(StringComparer.Ordinal)];
             foreach (JsonProperty text in document.RootElement.GetProperty("texts").EnumerateObject())
             {
                 if (string.IsNullOrWhiteSpace(text.Name))

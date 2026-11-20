@@ -5,10 +5,10 @@ using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedR
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Dtos.Filters;
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Dtos.Submits;
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Services;
-using Hsx.TextNormalizerService.Http.Host.Controllers.Base;
+using Hsx.TextNormalizerService.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.TextNormalizerService.Http.Host.Controllers;
+namespace Hsx.TextNormalizerService.Controllers;
 
 /// <summary>The customer content normalized requests: every action only calls the application service, which holds the rules.</summary>
 [Route("api/text-normalizer-service/v1/commercial/customer-content-normalized-requests")]

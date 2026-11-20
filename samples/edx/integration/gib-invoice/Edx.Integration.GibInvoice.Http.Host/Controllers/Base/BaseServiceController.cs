@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.GibInvoice.Http.Host.Controllers.Base;
+namespace Edx.Integration.GibInvoice.Controllers.Base;
 
 /// <summary>
 /// What every controller of the integration service is: a web api controller of the area <c>integration-service</c> that answers JSON and needs a valid JWT bearer token

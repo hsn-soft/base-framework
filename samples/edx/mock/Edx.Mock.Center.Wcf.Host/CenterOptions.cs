@@ -1,4 +1,4 @@
-namespace Edx.Mock.Center.Wcf.Host;
+namespace Edx.Mock.Center;
 
 /// <summary>Who the center is and how it works (section <c>Center</c>).</summary>
 public sealed class CenterOptions

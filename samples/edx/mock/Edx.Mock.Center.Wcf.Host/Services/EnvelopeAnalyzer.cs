@@ -5,7 +5,7 @@ using Edx.Shared.Efatura.Envelope;
 using Edx.Shared.Efatura.Ubl;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// The analysis of a queued envelope, the checks the center makes (integration guide, section 4.4): the zip holds one XML (1110, 1130, 1131, 1132); it is an envelope of the versions the center knows (1140, 1141, 1111, 1133, 1142, 1143); the sender and the receiver are registered (1170) and

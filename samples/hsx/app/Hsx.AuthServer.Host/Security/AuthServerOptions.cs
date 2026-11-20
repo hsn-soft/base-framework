@@ -1,4 +1,4 @@
-namespace Hsx.AuthServer.Host.Security;
+namespace Hsx.AuthServer.Security;
 
 /// <summary>The section <c>Auth</c> of the settings: how the refresh token of a user is kept by its client.</summary>
 public sealed class AuthServerOptions

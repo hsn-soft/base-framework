@@ -3,7 +3,7 @@ using Edx.Shared.Contracts.Events.Integration;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Edx.InvoiceService.Http.Host.EventHandlers.Integration;
+namespace Edx.InvoiceService.EventHandlers.Integration;
 
 /// <summary>The center took the envelope of the invoice: the invoice is sent. It runs as the tenant of the invoice (the envelope says which).</summary>
 public sealed class InvoiceSentHandler(InvoiceImportService import) : IIntegrationEventHandler<InvoiceSentEto>

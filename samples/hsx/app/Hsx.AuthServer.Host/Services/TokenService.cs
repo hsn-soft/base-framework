@@ -2,12 +2,12 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.MultiTenancy;
-using Hsx.AuthServer.Host.Security;
+using Hsx.AuthServer.Security;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Hsx.AuthServer.Host.Services;
+namespace Hsx.AuthServer.Services;
 
 public sealed record AccessToken(string Value, int ExpiresInSeconds);
 

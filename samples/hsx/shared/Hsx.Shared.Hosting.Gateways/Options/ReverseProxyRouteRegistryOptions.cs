@@ -3,7 +3,7 @@ namespace Hsx.Shared.Hosting.Gateways.Options;
 /// <summary>The routes of a gateway (section <c>ReverseProxyRoutes</c>): what a client asks for, and what the service is asked.</summary>
 public sealed class ReverseProxyRouteRegistryOptions
 {
-    public Dictionary<string, ReverseProxyRouteItem> Routes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, ReverseProxyRouteItem> Routes { get; set; } = [with(StringComparer.OrdinalIgnoreCase)];
 }
 
 public sealed class ReverseProxyRouteItem

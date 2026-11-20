@@ -22,7 +22,7 @@ internal static class InvoiceTable
             throw new InvoiceFileException("The file is empty: it needs a header row and a row for each line of the invoice.");
         }
 
-        Dictionary<string, int> known = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, int> known = [with(StringComparer.OrdinalIgnoreCase)];
         for (int index = 0; index < rows[0].Count; index++)
         {
             string name = rows[0][index].Trim();

@@ -16,7 +16,7 @@ public static class ReverseProxyConfigBuilder
         ArgumentNullException.ThrowIfNull(serviceOptions);
 
         List<RouteConfig> routes = [];
-        Dictionary<string, ClusterConfig> clusters = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, ClusterConfig> clusters = [with(StringComparer.OrdinalIgnoreCase)];
 
         foreach ((string routeId, ReverseProxyRouteItem route) in routeOptions.Routes)
         {

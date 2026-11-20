@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Hsx.ContentService.Http.Host.Controllers.Base;
+namespace Hsx.ContentService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the content service is: a web api controller of the area <c>content-service</c> that answers JSON and needs a valid JWT bearer token (a controller that must be open says so with <c>[AllowAnonymous]</c>).

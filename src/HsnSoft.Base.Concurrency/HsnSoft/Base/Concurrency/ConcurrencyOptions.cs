@@ -18,7 +18,7 @@ public sealed class ConcurrencyOptions
     public int RetryAfterSeconds { get; set; } = 1;
 
     /// <summary>The limits that the settings change, by name (<c>send-invoice</c>); what is not here is what the code says.</summary>
-    public Dictionary<string, ConcurrencyLimitSetting> Limits { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, ConcurrencyLimitSetting> Limits { get; set; } = [with(StringComparer.OrdinalIgnoreCase)];
 
     /// <summary>The maximum and the lease of <paramref name="name"/>: the settings win over what the code said.</summary>
     public (int Max, TimeSpan Lease) Resolve(string name, int codeMax, TimeSpan? codeLease = null)

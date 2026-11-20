@@ -2,11 +2,11 @@ using Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
 using Abc.ProductService.Application.Contracts.ProductDomain.Services;
-using Abc.ProductService.Http.Host.Controllers.Base;
+using Abc.ProductService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ProductService.Http.Host.Controllers;
+namespace Abc.ProductService.Controllers;
 
 /// <summary>The products: every action only calls the application service, which holds the rules.</summary>
 [Route("api/product-service/v1/commercial/products")]

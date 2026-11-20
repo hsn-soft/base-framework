@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Edx.AuthServer.Host.Controllers.Base;
-using Edx.AuthServer.Host.Security;
-using Edx.AuthServer.Host.Services;
+using Edx.AuthServer.Controllers.Base;
+using Edx.AuthServer.Security;
+using Edx.AuthServer.Services;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging.Masking;
 using HsnSoft.Base.MultiTenancy;
@@ -9,7 +9,7 @@ using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.AuthServer.Host.Controllers;
+namespace Edx.AuthServer.Controllers;
 
 public sealed class LoginDto
 {

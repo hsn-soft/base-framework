@@ -105,7 +105,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0041](0041-application-service-base-in-the-framework.md) | `ApplicationService` is the framework's; the application services of a service derive from its base | Accepted | 2026-10-25 |
 | [0040](0040-api-controller-base-in-the-framework.md) | `ApiControllerBase` is the framework's; a service's base controller derives from it | Accepted | 2026-10-25 |
 | [0039](0039-guard-and-translating-a-response-body.md) | `Guard` for the checks of the domain, and translating a text in a response body | Accepted | 2026-10-25 |
-| [0038](0038-localization.md) | Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request | Accepted | 2026-10-25 |
+| [0038](0038-localization.md) | Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request | Accepted (the order of the language: [0160](0160-the-header-of-the-request-chooses-the-language-before-the-claim-of-the-token.md)) | 2026-10-25 |
 | [0037](0037-audit-soft-delete-and-tenants.md) | Audit, soft delete and tenants of an entity | Accepted | 2026-10-25 |
 | [0036](0036-icurrentuser-in-the-framework.md) | `ICurrentUser` is the framework's; the JWT authentication registers it | Accepted | 2026-10-25 |
 | [0026](0026-route-pattern-and-jwt-by-default.md) | Routes are `api/{area}/v1/{commercial|public}/{controller}`, and every endpoint needs a JWT unless it says otherwise | Accepted | 2026-10-25 |
@@ -120,7 +120,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md); the version and the release by [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md)) | 2026-10-22 |
+| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md); the version and the release by [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md); the target framework by [ADR-0157](0157-the-framework-targets-net11-and-its-first-release-of-the-month-is-a-candidate.md)) | 2026-10-22 |
 | [0008](0008-code-style-and-analyzers.md) | Code style: the `.editorconfig` is the only source, analyzers run in the build | Accepted | 2026-10-22 |
 | [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
 | [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |
@@ -136,6 +136,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0015](0015-logging-architecture.md) | Everything logs through `ILogger`; a provider decides what a log is and where it goes | Accepted | 2026-10-24 |
 | [0016](0016-log-types-by-namespace.md) | The log type is told by the namespace of the class that wrote it | Accepted | 2026-10-25 |
 | [0017](0017-two-places-two-levels.md) | The console and what is kept have separate levels | Accepted | 2026-10-25 |
+| [0164](0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md) | The file log is on by default in the Development environment only, and `IsFileLogActive` turns it on or off | Accepted | 2026-11-19 |
 | [0018](0018-chain-logs.md) | The chain logs: a request and a message are each a pair of logs, with ids that tie a whole chain together | Accepted | 2026-10-24 |
 | [0019](0019-log-fields-pipeline.md) | Which fields a log has: a pipeline, a noise filter by type, and a map measured from a run | Accepted | 2026-10-25 |
 | [0020](0020-failure-logged-once.md) | A failure is logged once, with where it was thrown and why; a known error is a Warning | Accepted | 2026-10-24 |
@@ -169,3 +170,13 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0153](0153-the-ci-does-not-run-on-the-release-branches.md) | The CI does not run on the release branches | Accepted | 2026-11-05 |
 | [0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md) | The wait conditions of the Puppeteer renderer follow what the library supports | Accepted | 2026-11-05 |
 | [0155](0155-a-rate-limit-holds-across-every-pod-and-answers-429.md) | A rate limit holds across every pod and answers 429 (`RateLimiting`) | Accepted | 2026-11-06 |
+| [0156](0156-a-browser-request-may-run-functions-in-the-page-leave-kinds-of-resources-unloaded-and-hide-that-it-is-driven.md) | A browser request may run functions in the page, leave kinds of resources unloaded and hide that it is driven (`Browser`) | Accepted | 2026-11-10 |
+| [0157](0157-the-framework-targets-net11-and-its-first-release-of-the-month-is-a-candidate.md) | The framework targets net11.0 and the 2026.11 base is released as a candidate first | Accepted | 2026-11-10 |
+| [0158](0158-the-root-namespace-of-a-host-is-the-name-of-its-project-without-the-host-suffix.md) | The root namespace of a host is the name of its project without the host suffix | Accepted | 2026-11-11 |
+| [0159](0159-a-place-of-a-concurrency-limit-is-handed-over-with-an-event-so-a-job-answers-at-once-and-is-over-when-its-handler-is.md) | A place of a concurrency limit is handed over with an event, so a job answers at once and is over when its handler is | Accepted | 2026-11-12 |
+| [0160](0160-the-header-of-the-request-chooses-the-language-before-the-claim-of-the-token.md) | The header of the request chooses the language before the claim of the token | Accepted | 2026-11-17 |
+| [0161](0161-a-host-open-to-the-internet-that-has-nothing-for-a-search-engine-answers-robots-with-one-call.md) | A host open to the internet that has nothing for a search engine answers robots.txt with one call | Accepted | 2026-11-18 |
+| [0162](0162-a-repository-write-says-what-it-did-and-fails-with-one-exception-that-names-the-records.md) | A repository write says what it did and fails with one exception that names the records | Accepted | 2026-11-19 |
+| [0163](0163-mongodb-transactions-are-a-unit-of-work-and-a-write-of-many-without-one-is-all-or-none-as-far-as-a-document-store-can.md) | MongoDB transactions are a unit of work, and a write of many without one is all or none as far as a document store can | Accepted | 2026-11-19 |
+| [0164](0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md) | The file log is on by default in the Development environment only, and `IsFileLogActive` turns it on or off | Accepted | 2026-11-19 |
+| [0165](0165-a-development-machine-may-download-chrome-when-it-is-missing-and-a-container-never-does.md) | A development machine may download Chrome when it is missing, and a container never does (`Browser.Puppeteer`) | Accepted | 2026-11-20 |

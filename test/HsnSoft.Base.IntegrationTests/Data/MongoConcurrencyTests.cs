@@ -76,7 +76,7 @@ public sealed class MongoConcurrencyTests(MongoFixture mongo) : IAsyncLifetime
         await Memos(other).UpdateAsync(loaded);
     }
 
-    private static void AssertConflict(BaseHttpException exception)
+    private static void AssertConflict(RepositoryException exception)
     {
         Assert.Equal(409, exception.HttpStatusCode);
         Assert.Equal(ConcurrencyConflict.MessageKey, exception.MessageKey);
@@ -110,7 +110,7 @@ public sealed class MongoConcurrencyTests(MongoFixture mongo) : IAsyncLifetime
         Memo stale = new("lost update");
         stale.SetConcurrencyStamp(seen);
         typeof(Entity<Guid>).GetProperty(nameof(Entity<>.Id))!.SetValue(stale, memo.Id);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Memos(scope).UpdateAsync(stale)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Memos(scope).UpdateAsync(stale)));
 
         Memo current = (await Memos(scope).FindAsync(memo.Id))!;
         Assert.Equal("by someone else", current.Title);
@@ -129,14 +129,14 @@ public sealed class MongoConcurrencyTests(MongoFixture mongo) : IAsyncLifetime
         await using AsyncServiceScope scope = _host.Services.CreateAsyncScope();
         Memo bulk = (await Memos(scope).FindAsync(memo.Id))!;
         bulk.SetConcurrencyStamp(seen);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Memos(scope).UpdateManyAsync([bulk])));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Memos(scope).UpdateManyAsync([bulk])));
 
         Memo toDelete = (await Memos(scope).FindAsync(memo.Id))!;
         toDelete.SetConcurrencyStamp(seen);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Memos(scope).DeleteAsync(toDelete)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Memos(scope).DeleteAsync(toDelete)));
         Memo toDeleteMany = (await Memos(scope).FindAsync(memo.Id))!;
         toDeleteMany.SetConcurrencyStamp(seen);
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Memos(scope).DeleteManyAsync([toDeleteMany])));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Memos(scope).DeleteManyAsync([toDeleteMany])));
 
         Memo fresh = (await Memos(scope).FindAsync(memo.Id))!;
         await Memos(scope).DeleteAsync(fresh);
@@ -153,6 +153,6 @@ public sealed class MongoConcurrencyTests(MongoFixture mongo) : IAsyncLifetime
         Assert.Equal(1, await scope.ServiceProvider.GetRequiredService<IMongoRepository<Memo, Guid>>().UpdateWhereAsync(candidate => candidate.Id == memo.Id, update => update.Set(candidate => candidate.Title, "by statement")));
 
         seen.Title = "stale";
-        AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Memos(scope).UpdateAsync(seen)));
+        AssertConflict(await Assert.ThrowsAsync<RepositoryException>(() => Memos(scope).UpdateAsync(seen)));
     }
 }

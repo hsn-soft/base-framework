@@ -4,7 +4,7 @@ using CoreWCF.Configuration;
 using CoreWCF.Description;
 using Edx.Integration.FirmInvoice.Application.Storage;
 
-namespace Edx.Integration.FirmInvoice.Wcf.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>The WCF endpoint of the firm invoice integration: an entry point and nothing more, the application service it calls does not know WCF (the framework has no package for it: ADR-0027).</summary>
 public static class FirmInvoiceWcfRegister

@@ -1,7 +1,7 @@
 using Edx.Mock.Center.Domain.Participants;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host;
+namespace Edx.Mock.Center;
 
 /// <summary>Keeps the participants in step with the settings at every start: the center itself, the customers of this integrator (Veriban, Bilgera) and a customer of another integrator, each with its aliases and the service that serves them.</summary>
 public static class ParticipantSeeder

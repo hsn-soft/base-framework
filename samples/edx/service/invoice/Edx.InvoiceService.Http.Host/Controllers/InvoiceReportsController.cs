@@ -2,13 +2,13 @@ using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Dtos;
 using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Dtos.Filters;
 using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Dtos.Submits;
 using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Services;
-using Edx.InvoiceService.Http.Host.Controllers.Base;
+using Edx.InvoiceService.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.InvoiceService.Http.Host.Controllers;
+namespace Edx.InvoiceService.Controllers;
 
 /// <summary>The reports of the invoices of a tenant. Reading is an endpoint permission, making and deleting are the buttons of the page (actions); how far back a caller looks is its constraint, and what a report amounts to is an operation.</summary>
 [Route("api/invoice-service/v1/commercial/invoice-reports")]
