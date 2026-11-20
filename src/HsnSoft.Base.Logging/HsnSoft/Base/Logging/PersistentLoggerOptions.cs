@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -42,11 +43,27 @@ public sealed class PersistentLoggerOptions
     /// </summary>
     public string? AppNamespace { get; set; }
 
-    /// <summary>Send persistent logs to Graylog; when it is off they go to <see cref="FilePath"/>.</summary>
+    /// <summary>Graylog keeps the persistent logs (<see cref="IsFileLogActive"/> is then not looked at). Graylog or the file, never both.</summary>
     public bool IsGrayLogActive { get; set; }
+
+    /// <summary>
+    /// Whether the persistent logs are written to the file <see cref="FilePath"/> when Graylog is off (<c>PersistentLogger:IsFileLogActive</c>; it does nothing while Graylog is on).
+    /// When Graylog is off and this is <see langword="false"/> nothing is kept: the console is the only place.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="FromConfiguration"/> gives it the value of the setting; when the setting is missing, or is neither <c>true</c> nor <c>false</c>, it is <see langword="true"/> in the Development
+    /// environment (the name is read from <c>environment</c>, <c>ASPNETCORE_ENVIRONMENT</c> or <c>DOTNET_ENVIRONMENT</c>) and <see langword="false"/> in any other (docker, k8s, test, UAT, production).
+    /// A container has a read only root file system and a file inside it is lost with it, so the file is a tool of a developer's machine unless an environment asks for it, and then the folder of
+    /// <see cref="FilePath"/> must be writable. An instance made in code (not read from the configuration) has <see langword="false"/> until it is set.
+    /// </remarks>
+    public bool IsFileLogActive { get; set; }
+
+    /// <summary>The persistent logs go to the file: Graylog is off and <see cref="IsFileLogActive"/> is on.</summary>
+    public bool WritesFile => !IsGrayLogActive && IsFileLogActive;
 
     public GrayLogOptions GrayLog { get; set; } = new();
 
+    /// <summary>The file of the persistent logs (rolled daily, the last 30 kept) when <see cref="WritesFile"/>; a relative path is under the working directory of the host.</summary>
     public string FilePath { get; set; } = "Logs/logs.txt";
 
     /// <summary>
@@ -89,6 +106,17 @@ public sealed class PersistentLoggerOptions
     /// <summary>Per category prefix, the lowest level that is kept for it (e.g. <c>Microsoft.AspNetCore</c> = Error), instead of <see cref="LogLevel"/>; it counts below that prefix too. The console has its own, <c>Logging:LogLevel</c>.</summary>
     public Dictionary<string, LogLevel> LevelOverrides { get; set; } = [];
 
+    // the key the host builder gives the environment (`environment`, from the variable ASPNETCORE_ENVIRONMENT or DOTNET_ENVIRONMENT) or the variable itself
+    private static readonly string[] s_environmentKeys = ["environment", "ASPNETCORE_ENVIRONMENT", "DOTNET_ENVIRONMENT"];
+
+    private static bool IsDevelopmentEnvironment(IConfiguration configuration)
+    {
+        string? name = s_environmentKeys
+            .Select(key => configuration[key])
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+        return string.Equals(name?.Trim(), "Development", StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>
     /// Reads the <c>PersistentLogger</c> section. It is forgiving, as the services in production rely on: level names may be Serilog's
     /// (<c>Verbose</c> is Trace, <c>Fatal</c> is Critical) in any case, and a missing or unreadable value keeps its default.
@@ -103,6 +131,7 @@ public sealed class PersistentLoggerOptions
             ConsoleLevels = LogLevelRules.FromConfiguration(configuration.GetSection("Logging:LogLevel"), LogLevel.Information),
             LogLevel = ParseLevel(section["LogLevel"], LogCategories.PersistentFloor),
             IsGrayLogActive = bool.TryParse(section["IsGrayLogActive"], out bool grayLog) && grayLog,
+            IsFileLogActive = bool.TryParse(section["IsFileLogActive"], out bool fileLog) ? fileLog : IsDevelopmentEnvironment(configuration),
             IsSelfLogActive = bool.TryParse(section["IsSelfLogActive"], out bool selfLog) && selfLog,
             Version = section["Version"],
             VersionVariable = string.IsNullOrWhiteSpace(section["VersionVariable"]) ? "BUILD_NUMBER" : section["VersionVariable"]!,

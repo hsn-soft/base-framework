@@ -136,6 +136,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0015](0015-logging-architecture.md) | Everything logs through `ILogger`; a provider decides what a log is and where it goes | Accepted | 2026-10-24 |
 | [0016](0016-log-types-by-namespace.md) | The log type is told by the namespace of the class that wrote it | Accepted | 2026-10-25 |
 | [0017](0017-two-places-two-levels.md) | The console and what is kept have separate levels | Accepted | 2026-10-25 |
+| [0164](0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md) | The file log is on by default in the Development environment only, and `IsFileLogActive` turns it on or off | Accepted | 2026-11-19 |
 | [0018](0018-chain-logs.md) | The chain logs: a request and a message are each a pair of logs, with ids that tie a whole chain together | Accepted | 2026-10-24 |
 | [0019](0019-log-fields-pipeline.md) | Which fields a log has: a pipeline, a noise filter by type, and a map measured from a run | Accepted | 2026-10-25 |
 | [0020](0020-failure-logged-once.md) | A failure is logged once, with where it was thrown and why; a known error is a Warning | Accepted | 2026-10-24 |
@@ -177,3 +178,5 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0161](0161-a-host-open-to-the-internet-that-has-nothing-for-a-search-engine-answers-robots-with-one-call.md) | A host open to the internet that has nothing for a search engine answers robots.txt with one call | Accepted | 2026-11-18 |
 | [0162](0162-a-repository-write-says-what-it-did-and-fails-with-one-exception-that-names-the-records.md) | A repository write says what it did and fails with one exception that names the records | Accepted | 2026-11-19 |
 | [0163](0163-mongodb-transactions-are-a-unit-of-work-and-a-write-of-many-without-one-is-all-or-none-as-far-as-a-document-store-can.md) | MongoDB transactions are a unit of work, and a write of many without one is all or none as far as a document store can | Accepted | 2026-11-19 |
+| [0164](0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md) | The file log is on by default in the Development environment only, and `IsFileLogActive` turns it on or off | Accepted | 2026-11-19 |
+| [0165](0165-a-development-machine-may-download-chrome-when-it-is-missing-and-a-container-never-does.md) | A development machine may download Chrome when it is missing, and a container never does (`Browser.Puppeteer`) | Accepted | 2026-11-20 |

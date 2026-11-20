@@ -8,7 +8,7 @@ An application that needs the page after its scripts ran (a scraper), a PDF (an 
 | `HsnSoft.Base.Browser.Puppeteer` | The Chrome implementation (PuppeteerSharp), the settings, the readiness check |
 
 ```csharp
-builder.Services.AddPuppeteerBrowser(builder.Configuration);        // section Browser; ExecutablePath is required
+builder.Services.AddPuppeteerBrowser(builder.Configuration);        // section Browser; ExecutablePath is required (or DownloadWhenMissing on a development machine)
 
 byte[] pdf = await renderer.RenderPdfAsync(BrowserRequest.FromHtml(html), new PdfOptions { Format = PaperFormat.A4 }, cancellationToken);
 RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(address)) with { WaitUntil = WaitCondition.NetworkIdle, WaitForSelector = "#content" }, cancellationToken);
@@ -46,7 +46,9 @@ A browser resolves a name again when it connects, so a name that changes its ans
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `ExecutablePath` | required | The Chrome or Chromium to start. **It is never downloaded by the application** |
+| `ExecutablePath` | required, unless `DownloadWhenMissing` is on | The Chrome or Chromium to start |
+| `DownloadWhenMissing` | `false` | A Chrome that is not at `ExecutablePath` (or no path) is downloaded once and used. **Only outside a container**: the renderer finds out itself whether it runs in one and never downloads there, whatever this says. For a developer machine ([ADR-0165](adr/0165-a-development-machine-may-download-chrome-when-it-is-missing-and-a-container-never-does.md)) |
+| `DownloadPath` | `{LocalApplicationData}/HsnSoft/browser` | The folder of the download; shared by every application of the machine, so Chrome is fetched once |
 | `DisableSandbox` | `false` | `--no-sandbox`. Chrome refuses to start as root with its sandbox; a container that runs as root has to turn it on, and then the page it renders can reach the machine: run the container as a user that is not root where you can |
 | `DisableDevShmUsage` | `false` | For a container whose `/dev/shm` is small (Docker gives 64 MB) |
 | `IgnoreCertificateErrors` | `false` | Development only |
@@ -60,7 +62,11 @@ A browser resolves a name again when it connects, so a name that changes its ans
 | `ShutdownTimeoutSeconds` | 20 | A stopping host waits this long for the pages being rendered, then ends them |
 | `AllowedHosts`, `AllowPrivateNetworks` | any public host, `false` | The policy |
 
-Chrome is started when the first page is needed, not when the host starts, and again when it is gone. The readiness check (`browser`) is ready when the Chrome of `ExecutablePath` is there; it does not start a browser for a probe.
+Chrome is started when the first page is needed, not when the host starts, and again when it is gone. The readiness check (`browser`) is ready when the Chrome of `ExecutablePath` is there, or when one would be downloaded; it does not start a browser for a probe.
+
+### A development machine
+
+`Browser:DownloadWhenMissing=true` in the settings of the Development environment lets a new machine run with no setup: the first page downloads Chrome (about 150 MB, once) into `DownloadPath`. A container is recognised by `DOTNET_RUNNING_IN_CONTAINER` (the .NET images set it), `IS_IN_DOCKER_CONTAINER`, `KUBERNETES_SERVICE_HOST` or the file `/.dockerenv`; there the flag is ignored and, if `ExecutablePath` is not there, the start fails with the path in the message.
 
 ## In an image
 

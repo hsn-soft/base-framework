@@ -4,15 +4,25 @@ using System.Collections.Generic;
 namespace HsnSoft.Base.Browser.Puppeteer;
 
 /// <summary>
-/// The settings of the Chrome that renders (section <c>Browser</c>). Chrome is not downloaded by the application: <see cref="ExecutablePath"/> names the one the machine or the image has. The defaults are the safe ones (the sandbox of
+/// The settings of the Chrome that renders (section <c>Browser</c>). <see cref="ExecutablePath"/> names the one the machine or the image has; a development machine that has none may let it be downloaded
+/// (<see cref="DownloadWhenMissing"/>), and a container never downloads, whatever the setting says. The defaults are the safe ones (the sandbox of
 /// Chrome on, certificates checked); a container that runs as root has to say so with <see cref="DisableSandbox"/>.
 /// </summary>
 public sealed class PuppeteerOptions
 {
     public const string SectionName = "Browser";
 
-    /// <summary>The Chrome (or Chromium) to start (<c>/usr/bin/chromium</c>). Required.</summary>
+    /// <summary>The Chrome (or Chromium) to start (<c>/usr/bin/chromium</c>). Required, unless <see cref="DownloadWhenMissing"/> is on.</summary>
     public string ExecutablePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether a Chrome that is not at <see cref="ExecutablePath"/> (or no path at all) is downloaded once and used. Default: <see langword="false"/>. The renderer looks whether the process runs in a container (the .NET image variable,
+    /// <c>IS_IN_DOCKER_CONTAINER</c>, Kubernetes, <c>/.dockerenv</c>) and **never downloads in one**, whatever this says: an image has its Chrome. For a developer machine.
+    /// </summary>
+    public bool DownloadWhenMissing { get; set; }
+
+    /// <summary>The folder the Chrome is downloaded to. Default: a <c>HsnSoft/browser</c> folder under the local application data of the user, shared by every application of the machine.</summary>
+    public string? DownloadPath { get; set; }
 
     /// <summary>
     /// Whether Chrome runs without its sandbox (<c>--no-sandbox</c>). Default: <see langword="false"/>. Chrome refuses to start as root with the sandbox, so a container that runs as root needs it on, and then **the page it renders can
@@ -67,9 +77,9 @@ public sealed class PuppeteerOptions
 
     internal void Validate()
     {
-        if (string.IsNullOrWhiteSpace(ExecutablePath))
+        if (string.IsNullOrWhiteSpace(ExecutablePath) && !DownloadWhenMissing)
         {
-            throw new InvalidOperationException("Browser:ExecutablePath is required: the Chrome to start.");
+            throw new InvalidOperationException("Browser:ExecutablePath is required: the Chrome to start (or Browser:DownloadWhenMissing on a development machine).");
         }
 
         Range(MaxConcurrentPages, 1, 64, nameof(MaxConcurrentPages));
