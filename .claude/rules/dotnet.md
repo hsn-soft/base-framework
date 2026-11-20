@@ -20,3 +20,4 @@ paths:
 - Before changing a project file, apply the living rules in ADR-0075.
 
 Relevant decisions: ADR-0007–0008, ADR-0043, ADR-0075–0076, ADR-0105, ADR-0123, ADR-0134.
+- The warnings kept as warnings under CI warnings-as-errors are listed with their reason in `common.props` (`CS0618`, `CS0612`, `NU1901`-`NU1904`, `NU5104`); add a code there only for a warning that appears without a code change and say why ([ADR-0007](../../docs/adr/0007-build-settings-and-versioning.md), [ADR-0166](../../docs/adr/0166-nu5104-stays-a-warning-so-a-stable-package-may-depend-on-a-pre-release-package-until-its-stable-version-exists.md)).
