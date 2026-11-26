@@ -1,4 +1,9 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
+using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using MongoDB.Driver;
 using Testcontainers.Azurite;
@@ -95,6 +100,60 @@ public sealed class KafkaFixture : ContainerFixture<KafkaContainer>
     protected override KafkaContainer Create() => new KafkaBuilder("confluentinc/cp-kafka:7.8.0").Build();
 }
 
+/// <summary>
+/// A MongoDB that only talks TLS (<c>requireTLS</c>), with a server certificate signed by a private CA that is made for the test run and exists nowhere else: the system does not trust it, so only the CA file of the connection string (<c>tlsCAFile</c>) can.
+/// <see cref="CaPem"/> is the CA that signed it, <see cref="OtherCaPem"/> a CA that did not.
+/// </summary>
+public sealed class MongoTlsFixture : ContainerFixture<IContainer>
+{
+    private const int MongoPort = 27017;
+
+    public string CaPem { get; private set; } = string.Empty;
+
+    public string OtherCaPem { get; private set; } = string.Empty;
+
+    /// <summary>The host and port the tests connect to; <c>localhost</c> is in the certificate.</summary>
+    public string HostAndPort => $"localhost:{Container.GetMappedPublicPort(MongoPort)}";
+
+    protected override IContainer Create()
+    {
+        (string ca, string server) = MakeCertificates();
+        CaPem = ca;
+        OtherCaPem = MakeCertificates().Ca;
+        return new ContainerBuilder("mongo:7.0")
+            .WithPortBinding(MongoPort, true)
+            .WithResourceMapping(Encoding.ASCII.GetBytes(server), "/certs/server.pem", 0b110_100_100 /* rw-r--r--: the server runs as another user than the one that owns the file */)
+            .WithResourceMapping(Encoding.ASCII.GetBytes(ca), "/certs/ca.pem", 0b110_100_100)
+            .WithCommand("mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/certs/server.pem", "--tlsCAFile", "/certs/ca.pem", "--tlsAllowConnectionsWithoutCertificates", "--bind_ip_all")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Waiting for connections"))
+            .Build();
+    }
+
+    /// <summary>A new CA (PEM) and a server certificate and key (PEM, one file) for localhost that it signed.</summary>
+    private static (string Ca, string Server) MakeCertificates()
+    {
+        using RSA caKey = RSA.Create(2048);
+        CertificateRequest caRequest = new("CN=HsnSoft test CA", caKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        caRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        caRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
+        using X509Certificate2 ca = caRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-30), DateTimeOffset.UtcNow.AddDays(30));
+
+        using RSA serverKey = RSA.Create(2048);
+        CertificateRequest request = new("CN=localhost", serverKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        SubjectAlternativeNameBuilder names = new();
+        names.AddDnsName("localhost");
+        names.AddIpAddress(IPAddress.Loopback);
+        request.CertificateExtensions.Add(names.Build());
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension([new Oid("1.3.6.1.5.5.7.3.1")], false));
+        byte[] serial = RandomNumberGenerator.GetBytes(8);
+        serial[0] &= 0x7F;
+        using X509Certificate2 server = request.Create(ca, DateTimeOffset.UtcNow.AddHours(-1), DateTimeOffset.UtcNow.AddDays(10), serial);
+
+        return (ca.ExportCertificatePem() + "\n", server.ExportCertificatePem() + "\n" + serverKey.ExportPkcs8PrivateKeyPem() + "\n");
+    }
+}
+
 /// <summary>The names of the collections: the classes of one collection share the container of its fixture.</summary>
 public static class Collections
 {
@@ -103,6 +162,7 @@ public static class Collections
     public const string SqlServer = "sqlserver";
     public const string Mongo = "mongo";
     public const string MongoReplicaSet = "mongo-replica-set";
+    public const string MongoTls = "mongo-tls";
     public const string Redis = "redis";
     public const string Minio = "minio";
     public const string Azurite = "azurite";
@@ -123,6 +183,9 @@ public sealed class MongoCollection : ICollectionFixture<MongoFixture>;
 
 [CollectionDefinition(Collections.MongoReplicaSet)]
 public sealed class MongoReplicaSetCollection : ICollectionFixture<MongoReplicaSetFixture>;
+
+[CollectionDefinition(Collections.MongoTls)]
+public sealed class MongoTlsCollection : ICollectionFixture<MongoTlsFixture>;
 
 [CollectionDefinition(Collections.Redis)]
 public sealed class RedisCollection : ICollectionFixture<RedisFixture>;
