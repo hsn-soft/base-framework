@@ -119,7 +119,7 @@ builder.Services
 | `Redis:InstanceName` | key prefix, e.g. `myproduct:` |
 | `RabbitMq:Connection` (`HostName`, `Port`, `UserName`, `Password`, `VirtualHost`) and `RabbitMq:EventBus` (`ExchangeName`, `ConsumerClientName`, `ErrorClientName`, ...) | `AddRabbitMqEventBus` |
 | `Jwt` (`Issuer`, `Audience`, `Key` or `PublicKeyFile`, `ValidateIssuer`, `ClockSkewSeconds`) | `AddBaseJwtAuthentication` |
-| `Mongo` (`ServerSelectionTimeout`, `ConnectTimeout`, `SocketTimeout`, `MaxConnectionPoolSize`, `MinConnectionPoolSize`, `WaitQueueTimeout`, `LogCommands`; the connection string's own options win), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseMongo` |
+| `Mongo` (`ServerSelectionTimeout`, `ConnectTimeout`, `SocketTimeout`, `MaxConnectionPoolSize`, `MinConnectionPoolSize`, `WaitQueueTimeout`, `LogCommands`; the connection string's own options win; `tlsCAFile` of the connection string is applied by the framework, [ADR-0167](adr/0167-the-tlscafile-of-a-mongodb-connection-string-is-applied-by-the-framework-because-the-net-driver-ignores-it.md)), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseMongo` |
 | `EntityFramework` (`MaxRetryCount`, `MaxRetryDelay`, `CommandTimeout`, `LogCommands`), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseEfCore`, `AddBasePostgres`, `AddBaseSqlServer`, `AddBaseMySql` |
 | `AwsS3` / `Minio` (`TimeoutSeconds`, `AwsS3:MaxErrorRetry`; not set: the client's own) | `AddAwsBlobStoring`, `AddMinioBlobStoring` |
 | `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](EventBus.md) | `AddRabbitMqEventBus` |

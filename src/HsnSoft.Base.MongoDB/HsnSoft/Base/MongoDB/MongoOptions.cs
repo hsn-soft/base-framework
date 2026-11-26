@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -6,7 +7,7 @@ namespace HsnSoft.Base.MongoDB;
 
 /// <summary>
 /// How long a service waits for MongoDB (section <c>Mongo</c>). The driver waits 30 seconds for a server and for ever on a connection that has stopped answering (a half-open connection after a network failure), so a request of a
-/// pod would hang until the system gives up on the socket; these bound the waits. An option that the connection string names (<c>serverSelectionTimeoutMS</c>, <c>connectTimeoutMS</c>, <c>socketTimeoutMS</c>) is the connection string's.
+/// pod would hang until the system gives up on the socket; these bound the waits. An option that the connection string names (<c>serverSelectionTimeoutMS</c>, <c>connectTimeoutMS</c>, <c>socketTimeoutMS</c>) is the connection string's. The <c>tlsCAFile</c> of the connection string (a PEM file of the CA of the server) is applied here, because the driver ignores it (see <see cref="MongoTlsCa"/>).
 /// </summary>
 public sealed class MongoOptions
 {
@@ -72,6 +73,8 @@ public sealed class MongoOptions
             settings.WaitQueueTimeout = wait;
         }
 
+        ApplyCaFile(settings, text);
+
         if (LogCommands && log is not null)
         {
             MongoCommandLog commands = new(log);
@@ -79,6 +82,21 @@ public sealed class MongoOptions
         }
 
         return settings;
+    }
+
+    /// <summary>The <c>tlsCAFile</c> of the connection string (the driver ignores it): the certificate of the server is checked against the CA of the file. Not when TLS is off or <c>tlsInsecure</c> is on.</summary>
+    private static void ApplyCaFile(MongoClientSettings settings, string connectionString)
+    {
+        string? file = MongoTlsCa.FileOf(connectionString);
+        if (file is null || !settings.UseTls || settings.AllowInsecureTls)
+        {
+            return;
+        }
+
+        X509Certificate2Collection roots = MongoTlsCa.Load(file);
+        SslSettings ssl = settings.SslSettings ?? new SslSettings();
+        ssl.ServerCertificateValidationCallback = (_, certificate, chain, errors) => MongoTlsCa.Validate(roots, certificate, chain, errors);
+        settings.SslSettings = ssl;
     }
 
     private static bool Names(string connectionString, string option) => connectionString.Contains(option, StringComparison.OrdinalIgnoreCase);
