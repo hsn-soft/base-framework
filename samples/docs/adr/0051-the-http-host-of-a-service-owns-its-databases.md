@@ -10,7 +10,7 @@ service one pod failed on the seed of the other and restarted.
 
 ## Decision
 
-- **Each host says which databases it prepares, in its `appsettings.json` (`SeedStartupConnections`)**: the REST host of a service owns the databases of the service (the identity service: `EfCore-IdentityService` and `EfCore-HistoryService`; the shipment service: `Mongo-ShipmentService` and `EfCore-ShipmentHistoryService`; the order service,
+- **Each host says which databases it prepares, in its `appsettings.json` (`SeedStartupConnections`)**: the REST host of a service owns the databases of the service (the identity service: `EfCoreIdentityService` and `EfCoreHistoryService`; the shipment service: `MongoShipmentService` and `EfCoreShipmentHistoryService`; the order service,
   the product service, the Edx invoice service and the two integrations: theirs), the auth servers and the gRPC and WCF hosts own none (`""`). Absent would have meant "all the ones it has".
 - **The steps are in the registration of the persistence, not in `Program.cs`**: the schema of a context is `AddSchemaStartupStep<TContext>(...)`, the Mongo collections and indexes and the seed are `AddDatabaseStartupStep(<connection name>, ...)`, all called by the `Add...Persistence` method of the service (the seed tenants of the product and the identity services
   are parameters of that method). So every host of a service has the same code (a REST, a gRPC and a WCF host call the same `AddFirmInvoicePersistence`) and only its `SeedStartupConnections` says which of them does the work. The steps run when the host starts, before any hosted service. The code of what is seeded did not change.

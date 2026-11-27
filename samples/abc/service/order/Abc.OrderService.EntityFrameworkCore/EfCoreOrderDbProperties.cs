@@ -12,5 +12,5 @@ public static class EfCoreOrderDbProperties
     /// <summary>The provider of the order database (<see cref="EfCoreProviderNames"/>).</summary>
     public static string Provider { get; set; } = EfCoreProviderNames.Postgres;
 
-    public const string ConnectionStringName = "EfCore-OrderService";
+    public const string ConnectionStringName = "EfCoreOrderService";
 }

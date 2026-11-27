@@ -19,8 +19,8 @@ shipment service on MongoDB (the shipments) and PostgreSQL with EF Core (the his
 
 ## Consequences
 
-- The samples now use, together: EF Core on SQL Server and PostgreSQL, MongoDB on two databases, in one solution; a `Mongo-StockService` connection string is another cluster as easily as another database.
-- The settings hold only connection strings: `Mongo-StockService`, `EfCore-ShipmentHistoryService` (and the ones of ADR-0012).
+- The samples now use, together: EF Core on SQL Server and PostgreSQL, MongoDB on two databases, in one solution; a `MongoStockService` connection string is another cluster as easily as another database.
+- The settings hold only connection strings: `MongoStockService`, `EfCoreShipmentHistoryService` (and the ones of ADR-0012).
 
 ## Related
 

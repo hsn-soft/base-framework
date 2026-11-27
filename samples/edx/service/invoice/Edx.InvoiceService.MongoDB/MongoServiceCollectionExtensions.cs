@@ -19,7 +19,7 @@ namespace Edx.InvoiceService.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the invoice service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-InvoiceService</c>, and its readiness check), the tenants of the documents, the mapping and the repository.
+    /// Registers what the invoice service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoInvoiceService</c>, and its readiness check), the tenants of the documents, the mapping and the repository.
     /// </summary>
     public static IServiceCollection AddInvoicePersistence(this IServiceCollection services, IConfiguration configuration)
     {

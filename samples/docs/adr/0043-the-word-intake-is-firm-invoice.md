@@ -15,7 +15,7 @@ The word *intake* is replaced by *firm invoice* in every name of the firm invoic
 - **Routes:** `/api/firm-invoice-service/v1/commercial/...` and `/api/firm-invoice-service/v1/back-office/...` (the back office, the customer examples, the Python client and the smoke test call them), WCF `/wcf/firm-invoice.svc`.
 - **gRPC:** the proto is `firm_invoice.proto`, package `edx.firm_invoice.v1`, service `FirmInvoiceService`. **WCF:** the contract is `IFirmInvoiceService` (`urn:edx:firm-invoice:...`).
 - **Permission codes:** `endpoint.firm-invoice.upload`, `.submit-model`, `.files.get`, `endpoint.firm-invoice-back-office.*`, `operation.firm-invoice.*`, `constraint.firm-invoice.upload.max-bytes`.
-- **Settings:** the section `FirmInvoice` (`FirmInvoice:ServiceName`, `FirmInvoice:MaxUploadBytes`) and the connection string `Mongo-FirmInvoiceService`.
+- **Settings:** the section `FirmInvoice` (`FirmInvoice:ServiceName`, `FirmInvoice:MaxUploadBytes`) and the connection string `MongoFirmInvoiceService`.
 - **Code:** `FirmInvoiceAppService`, `FirmInvoiceOptions`, `MongoFirmInvoiceDbProperties`, `AddFirmInvoicePersistence`, the folders `FirmInvoiceDomain` and `Events/FirmInvoice`.
 
 This supersedes the "what is not renamed" part of ADR-0038 (and the route names of [ADR-0039](0039-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md)). Older ADRs keep the words they were written with.

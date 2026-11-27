@@ -12,5 +12,5 @@ public static class EfCoreContentDbProperties
     /// <summary>The provider of the content database (<see cref="EfCoreProviderNames"/>).</summary>
     public static string Provider { get; set; } = EfCoreProviderNames.Postgres;
 
-    public const string ConnectionStringName = "EfCore-ContentService";
+    public const string ConnectionStringName = "EfCoreContentService";
 }

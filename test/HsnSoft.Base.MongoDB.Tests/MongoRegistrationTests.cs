@@ -74,8 +74,8 @@ public class MongoRegistrationTests
     private static IConfiguration TwoConnections()
         => new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ConnectionStrings:Mongo-ProductService"] = "mongodb://localhost:27099/abc_product",
-            ["ConnectionStrings:Mongo-StockService"] = "mongodb://localhost:27098/abc_stock",
+            ["ConnectionStrings:MongoProductService"] = "mongodb://localhost:27099/abc_product",
+            ["ConnectionStrings:MongoStockService"] = "mongodb://localhost:27098/abc_stock",
         }).Build();
 
     [Fact]
@@ -83,8 +83,8 @@ public class MongoRegistrationTests
     {
         IConfiguration configuration = TwoConnections();
         IServiceCollection services = new ServiceCollection().AddLogging()
-            .AddBaseMongo(configuration, "Mongo-ProductService")
-            .AddBaseMongo(configuration, "Mongo-StockService", "stock");
+            .AddBaseMongo(configuration, "MongoProductService")
+            .AddBaseMongo(configuration, "MongoStockService", "stock");
         using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("abc_product", provider.GetRequiredService<IMongoDatabase>().DatabaseNamespace.DatabaseName);
@@ -100,8 +100,8 @@ public class MongoRegistrationTests
     {
         IConfiguration configuration = TwoConnections();
         IServiceCollection services = new ServiceCollection().AddLogging()
-            .AddBaseMongo(configuration, "Mongo-ProductService")
-            .AddBaseMongo(configuration, "Mongo-StockService", "stock")
+            .AddBaseMongo(configuration, "MongoProductService")
+            .AddBaseMongo(configuration, "MongoStockService", "stock")
             .AddMongoRepository<Probe, Guid>("probes", "stock");
         using ServiceProvider provider = services.BuildServiceProvider();
         using IServiceScope scope = provider.CreateScope();
@@ -114,5 +114,5 @@ public class MongoRegistrationTests
 
     [Fact]
     public void ABlankKey_IsRefused()
-        => Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseMongo(TwoConnections(), "Mongo-StockService", " "));
+        => Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseMongo(TwoConnections(), "MongoStockService", " "));
 }

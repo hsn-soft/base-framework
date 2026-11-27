@@ -16,7 +16,7 @@ namespace Edx.Integration.FirmInvoice.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the firm invoice integration needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-FirmInvoiceService</c>, and its readiness check), the tenants of the documents, the mappings and the repositories.
+    /// Registers what the firm invoice integration needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoFirmInvoiceService</c>, and its readiness check), the tenants of the documents, the mappings and the repositories.
     /// </summary>
     public static IServiceCollection AddFirmInvoicePersistence(this IServiceCollection services, IConfiguration configuration)
     {

@@ -16,7 +16,7 @@ namespace Abc.IdentityService.EntityFrameworkCore;
 public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the identity service needs of its database: the <c>IdentityDbContext</c> on the provider and the connection string that <see cref="EfCoreIdentityDbProperties"/> names (SQL Server, <c>ConnectionStrings:EfCore-IdentityService</c>), with its readiness check and the repositories.
+    /// Registers what the identity service needs of its database: the <c>IdentityDbContext</c> on the provider and the connection string that <see cref="EfCoreIdentityDbProperties"/> names (SQL Server, <c>ConnectionStrings:EfCoreIdentityService</c>), with its readiness check and the repositories.
     /// </summary>
     public static IServiceCollection AddIdentityPersistence(this IServiceCollection services, IConfiguration configuration, Guid systemTenantId, Guid companyTenantId)
     {
@@ -36,7 +36,7 @@ public static class EfCoreServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers the history context on the provider and the connection string that <see cref="EfCoreHistoryDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCore-HistoryService</c>): a second database of the identity service,
+    /// Registers the history context on the provider and the connection string that <see cref="EfCoreHistoryDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCoreHistoryService</c>): a second database of the identity service,
     /// beside the one of <see cref="AddIdentityPersistence"/> and of another provider. Only the identity service has it; the auth server, which only reads the users, does not.
     /// </summary>
     public static IServiceCollection AddIdentityHistoryPersistence(this IServiceCollection services, IConfiguration configuration)

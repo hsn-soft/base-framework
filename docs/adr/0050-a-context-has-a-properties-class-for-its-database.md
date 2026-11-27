@@ -10,7 +10,7 @@ belong to the context, not to the host that runs it. The old system had a static
 
 ## Decision
 
-- **Each context of a service has a static properties class in its persistence project** (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`): `DbTablePrefix`, `DbSchema`, `Provider` (one of `EfCoreProviderNames`) and the constant `ConnectionStringName` (`EfCore-IdentityService`, `EfCore-HistoryService`). The mappings read the prefix
+- **Each context of a service has a static properties class in its persistence project** (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`): `DbTablePrefix`, `DbSchema`, `Provider` (one of `EfCoreProviderNames`) and the constant `ConnectionStringName` (`EfCoreIdentityService`, `EfCoreHistoryService`). The mappings read the prefix
   and the schema (`ToTable(prefix + name, schema)`); the registration reads the provider and the connection name. They are in the code of the service, **not in its settings**.
 - **`AddBaseEfCore<TContext>(configuration, providers, provider, connectionName)`** registers a context on the provider and the connection string the code names. **The setting `Database:Provider` and the overload that read it are removed:** the provider and the connection name are said by the code. `AddBasePostgres` and `AddBaseSqlServer` stay as the call of a service with one database, with a connection name of their own, and `IEfCoreProvider` no longer has a connection name.
 - **One registration method for each context** (`AddIdentityPersistence`, `AddIdentityHistoryPersistence`), so a host registers the contexts it needs: the auth server reads the users and has no history.
@@ -18,7 +18,7 @@ belong to the context, not to the host that runs it. The old system had a static
 
 ## Consequences
 
-- The identity service has two databases, `abc_identity` (SQL Server) and `abc_history` (PostgreSQL), and the connection strings `ConnectionStrings:EfCore-IdentityService` and `ConnectionStrings:EfCore-HistoryService` replace `ConnectionStrings:SqlServer` and the setting `Database:Provider` in the settings of the identity service and the auth server.
+- The identity service has two databases, `abc_identity` (SQL Server) and `abc_history` (PostgreSQL), and the connection strings `ConnectionStrings:EfCoreIdentityService` and `ConnectionStrings:EfCoreHistoryService` replace `ConnectionStrings:SqlServer` and the setting `Database:Provider` in the settings of the identity service and the auth server.
 - There is no transaction over two databases: the application service writes the history after the change, and a failure between the two leaves the change made and the history without it (a transactional outbox is the way if it must not).
 
 ## Related

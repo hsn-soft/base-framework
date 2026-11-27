@@ -12,7 +12,7 @@ namespace Hsx.VideoGeneratorService.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the video generator service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-VideoGeneratorService</c>, and its readiness check), the mappings and the repositories, and the start step that makes the indexes.
+    /// Registers what the video generator service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoVideoGeneratorService</c>, and its readiness check), the mappings and the repositories, and the start step that makes the indexes.
     /// </summary>
     public static IServiceCollection AddVideoGeneratorPersistence(this IServiceCollection services, IConfiguration configuration)
     {

@@ -42,7 +42,7 @@ public sealed class EfCoreCommandLogTests
     private static async Task<List<(string Category, LogLevel Level)>> Written(string? logCommands, bool failing = false)
     {
         string file = Path.Combine(Path.GetTempPath(), $"efcommandlog-{Guid.NewGuid():N}.db");
-        Dictionary<string, string?> settings = new() { ["ConnectionStrings:EfCore-A"] = $"Data Source={file}" };
+        Dictionary<string, string?> settings = new() { ["ConnectionStrings:EfCoreA"] = $"Data Source={file}" };
         if (logCommands is not null)
         {
             settings["EntityFramework:LogCommands"] = logCommands;
@@ -57,7 +57,7 @@ public sealed class EfCoreCommandLogTests
             logging.AddProvider(memory);
             logging.AddFilter<Memory>(null, LogLevel.Trace);
         });
-        services.AddBaseEfCore<CommandContext>(configuration, providers => providers.Add(new Sqlite()), "sqlite", "EfCore-A");
+        services.AddBaseEfCore<CommandContext>(configuration, providers => providers.Add(new Sqlite()), "sqlite", "EfCoreA");
         await using ServiceProvider provider = services.BuildServiceProvider();
         try
         {

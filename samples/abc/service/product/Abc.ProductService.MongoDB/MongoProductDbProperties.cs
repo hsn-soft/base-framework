@@ -5,5 +5,5 @@ public static class MongoProductDbProperties
 {
     public static string CollectionPrefix { get; set; } = string.Empty;
 
-    public const string ConnectionStringName = "Mongo-ProductService";
+    public const string ConnectionStringName = "MongoProductService";
 }

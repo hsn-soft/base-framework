@@ -8,7 +8,7 @@ namespace HsnSoft.Base.EntityFrameworkCore.Tests;
 
 public sealed class EfCoreStartupTests : IDisposable
 {
-    private const string Connection = "EfCore-Startup";
+    private const string Connection = "EfCoreStartup";
 
     private sealed class Note
     {
@@ -88,7 +88,7 @@ public sealed class EfCoreStartupTests : IDisposable
     public void TheRegistration_TellsStartupAboutTheDatabase_ByTheNameOfItsConnection()
     {
         using ServiceProvider owner = Build(new LockingProvider(_log));
-        using ServiceProvider visitor = Build(new LockingProvider(_log), seedStartupConnections: "EfCore-Other");
+        using ServiceProvider visitor = Build(new LockingProvider(_log), seedStartupConnections: "EfCoreOther");
 
         StartupDatabase ownerOf = Assert.Single(owner.GetServices<StartupDatabase>());
         StartupDatabase visitorOf = Assert.Single(visitor.GetServices<StartupDatabase>());

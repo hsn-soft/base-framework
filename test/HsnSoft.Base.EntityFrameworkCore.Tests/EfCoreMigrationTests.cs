@@ -11,7 +11,7 @@ namespace HsnSoft.Base.EntityFrameworkCore.Tests;
 
 public sealed class EfCoreMigrationTests : IDisposable
 {
-    private const string Connection = "EfCore-Migrated";
+    private const string Connection = "EfCoreMigrated";
 
     private sealed class Tag
     {

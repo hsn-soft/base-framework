@@ -5,5 +5,5 @@ public static class MongoVideoGeneratorDbProperties
 {
     public static string CollectionPrefix { get; set; } = string.Empty;
 
-    public const string ConnectionStringName = "Mongo-VideoGeneratorService";
+    public const string ConnectionStringName = "MongoVideoGeneratorService";
 }

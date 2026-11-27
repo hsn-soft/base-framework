@@ -15,7 +15,7 @@ namespace Abc.ShipmentService.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the shipment service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-ShipmentService</c>, and its readiness check), the mappings and the repositories.
+    /// Registers what the shipment service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoShipmentService</c>, and its readiness check), the mappings and the repositories.
     /// </summary>
     public static IServiceCollection AddShipmentPersistence(this IServiceCollection services, IConfiguration configuration)
     {
