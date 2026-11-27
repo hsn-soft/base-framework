@@ -10,7 +10,7 @@ namespace Abc.ShipmentService.EntityFrameworkCore;
 public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the shipment history context on the provider and the connection string that <see cref="EfCoreShipmentHistoryDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCore-ShipmentHistoryService</c>), with its readiness check and the
+    /// Registers the shipment history context on the provider and the connection string that <see cref="EfCoreShipmentHistoryDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCoreShipmentHistoryService</c>), with its readiness check and the
     /// repository: the second database of the shipment service, beside the MongoDB of its shipments.
     /// </summary>
     public static IServiceCollection AddShipmentHistoryPersistence(this IServiceCollection services, IConfiguration configuration)

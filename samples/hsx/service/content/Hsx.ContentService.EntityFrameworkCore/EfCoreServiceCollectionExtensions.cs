@@ -16,7 +16,7 @@ namespace Hsx.ContentService.EntityFrameworkCore;
 public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the content service needs of PostgreSQL: the <c>ContentDbContext</c> on the provider and the connection string that <see cref="EfCoreContentDbProperties"/> names (<c>ConnectionStrings:EfCore-ContentService</c>), with its readiness check and the repositories.
+    /// Registers what the content service needs of PostgreSQL: the <c>ContentDbContext</c> on the provider and the connection string that <see cref="EfCoreContentDbProperties"/> names (<c>ConnectionStrings:EfCoreContentService</c>), with its readiness check and the repositories.
     /// </summary>
     public static IServiceCollection AddContentPersistence(this IServiceCollection services, IConfiguration configuration)
     {

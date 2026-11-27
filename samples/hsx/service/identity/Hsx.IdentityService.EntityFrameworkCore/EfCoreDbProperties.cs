@@ -12,5 +12,5 @@ public static class EfCoreDbProperties
     /// <summary>The provider of the identity database (<see cref="EfCoreProviderNames"/>).</summary>
     public static string Provider { get; set; } = EfCoreProviderNames.Postgres;
 
-    public const string ConnectionStringName = "EfCore-IdentityService";
+    public const string ConnectionStringName = "EfCoreIdentityService";
 }

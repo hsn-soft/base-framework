@@ -12,7 +12,7 @@ namespace Edx.Mock.Center.MongoDB;
 
 public static class MongoServiceCollectionExtensions
 {
-    /// <summary>Registers what the mock center needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-MockCenter</c>), the mapping and the two repositories.</summary>
+    /// <summary>Registers what the mock center needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoMockCenter</c>), the mapping and the two repositories.</summary>
     public static IServiceCollection AddCenterPersistence(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);

@@ -10,7 +10,7 @@ namespace Abc.OrderService.EntityFrameworkCore;
 public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the order service needs of PostgreSQL: the <c>OrderDbContext</c> on the provider and the connection string that <see cref="EfCoreOrderDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCore-OrderService</c>), with its readiness check and the repositories.
+    /// Registers what the order service needs of PostgreSQL: the <c>OrderDbContext</c> on the provider and the connection string that <see cref="EfCoreOrderDbProperties"/> names (PostgreSQL, <c>ConnectionStrings:EfCoreOrderService</c>), with its readiness check and the repositories.
     /// </summary>
     public static IServiceCollection AddOrderPersistence(this IServiceCollection services, IConfiguration configuration)
     {

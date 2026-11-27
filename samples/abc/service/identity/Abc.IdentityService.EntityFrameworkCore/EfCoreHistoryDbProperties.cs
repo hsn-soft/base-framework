@@ -12,5 +12,5 @@ public static class EfCoreHistoryDbProperties
     /// <summary>The provider of the history database (<see cref="EfCoreProviderNames"/>).</summary>
     public static string Provider { get; set; } = EfCoreProviderNames.Postgres;
 
-    public const string ConnectionStringName = "EfCore-HistoryService";
+    public const string ConnectionStringName = "EfCoreHistoryService";
 }

@@ -12,5 +12,5 @@ public static class EfCoreShipmentHistoryDbProperties
     /// <summary>The provider of the shipment history database (<see cref="EfCoreProviderNames"/>).</summary>
     public static string Provider { get; set; } = EfCoreProviderNames.Postgres;
 
-    public const string ConnectionStringName = "EfCore-ShipmentHistoryService";
+    public const string ConnectionStringName = "EfCoreShipmentHistoryService";
 }

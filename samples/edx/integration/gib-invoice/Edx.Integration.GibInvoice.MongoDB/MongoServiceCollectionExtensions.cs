@@ -16,7 +16,7 @@ namespace Edx.Integration.GibInvoice.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the integration service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-IntegrationService</c>, and its readiness check), the tenants of the documents, the mapping and the repositories.
+    /// Registers what the integration service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoIntegrationService</c>, and its readiness check), the tenants of the documents, the mapping and the repositories.
     /// </summary>
     public static IServiceCollection AddIntegrationPersistence(this IServiceCollection services, IConfiguration configuration)
     {
