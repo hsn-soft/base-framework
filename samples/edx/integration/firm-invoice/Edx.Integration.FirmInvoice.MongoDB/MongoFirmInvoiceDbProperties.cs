@@ -5,5 +5,5 @@ public static class MongoFirmInvoiceDbProperties
 {
     public static string CollectionPrefix { get; set; } = string.Empty;
 
-    public const string ConnectionStringName = "Mongo-FirmInvoiceService";
+    public const string ConnectionStringName = "MongoFirmInvoiceService";
 }

@@ -18,7 +18,7 @@ COPY --from=build /out .
 ENV ASPNETCORE_ENVIRONMENT=docker
 EXPOSE 8080
 # The host is started directly (its apphost, under one name for every host), not through `sh -c`: a shell drops the environment variables whose names have a hyphen, and the names of the connection strings
-# (ConnectionStrings__EfCore-OrderService) have one, so the settings that Kubernetes and compose give would never reach the host.
+# (ConnectionStrings__EfCoreOrderService) have one, so the settings that Kubernetes and compose give would never reach the host.
 RUN ln -s "/app/${ASSEMBLY}" /app/host
 USER $APP_UID
 ENTRYPOINT ["/app/host"]

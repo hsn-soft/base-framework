@@ -5,5 +5,5 @@ public static class MongoTextNormalizerDbProperties
 {
     public static string CollectionPrefix { get; set; } = string.Empty;
 
-    public const string ConnectionStringName = "Mongo-TextNormalizerService";
+    public const string ConnectionStringName = "MongoTextNormalizerService";
 }

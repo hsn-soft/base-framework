@@ -5,7 +5,7 @@ namespace HsnSoft.Base.Data.Tests;
 
 public class DatabaseStartupStepTests
 {
-    private const string Database = "EfCore-IdentityService";
+    private const string Database = "EfCoreIdentityService";
 
     /// <summary>A lock that one holder has at a time, and a log of who got it and gave it back.</summary>
     private sealed class FakeLock : IStartupLock, IDisposable
@@ -77,12 +77,12 @@ public class DatabaseStartupStepTests
     [Theory]
     [InlineData(null, true)]
     [InlineData("", false)]
-    [InlineData("EfCore-IdentityService", true)]
-    [InlineData("efcore-identityservice", true)]
-    [InlineData("Mongo-X; EfCore-IdentityService", true)]
-    [InlineData(" EfCore-IdentityService ;Mongo-X", true)]
-    [InlineData("Mongo-X;EfCore-HistoryService", false)]
-    [InlineData("EfCore-IdentityService,Mongo-X", false)]
+    [InlineData("EfCoreIdentityService", true)]
+    [InlineData("efcoreidentityservice", true)]
+    [InlineData("MongoX; EfCoreIdentityService", true)]
+    [InlineData(" EfCoreIdentityService ;MongoX", true)]
+    [InlineData("MongoX;EfCoreHistoryService", false)]
+    [InlineData("EfCoreIdentityService,MongoX", false)]
     public void OwnershipIsWhatTheSettingNames_AllWhenItIsAbsent_NoneWhenItIsEmpty(string? owns, bool expected)
     {
         using ServiceProvider services = Services(owns, new FakeLock());
@@ -94,7 +94,7 @@ public class DatabaseStartupStepTests
     public async Task ADatabaseTheHostDoesNotOwn_IsNotPrepared_AndItsLockIsNeverTaken()
     {
         FakeLock startupLock = new();
-        await using ServiceProvider services = Services("Mongo-X", startupLock);
+        await using ServiceProvider services = Services("MongoX", startupLock);
         bool ran = false;
 
         await services.RunDatabaseStepAsync(Database, "seed", _ =>

@@ -90,7 +90,7 @@ Every Abc entity has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the u
 
 ### The users of Abc
 
-The auth server (which only reads) and the identity service (which owns the database) share one SQL Server database (`ConnectionStrings:EfCore-IdentityService`, `Abc_Identity_Dev`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
+The auth server (which only reads) and the identity service (which owns the database) share one SQL Server database (`ConnectionStrings:EfCoreIdentityService`, `Abc_Identity_Dev`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
 (passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database Abc_Identity_Dev`). The `CreatedBy` and `UpdatedBy` of a user are the
 `sub` of the token of whoever made the request.
 
@@ -224,11 +224,11 @@ dotnet run --project samples/abc/service/shipment/Abc.ShipmentService.Http.Host 
 
 ### The history of the users (a second context on PostgreSQL)
 
-`HistoryDbContext` (PostgreSQL `Abc_History_Dev`, `ConnectionStrings:EfCore-HistoryService`) keeps what happened to the users: the identity service writes a record for each create, update and delete, and the auth server writes a `login` record for every token it
+`HistoryDbContext` (PostgreSQL `Abc_History_Dev`, `ConnectionStrings:EfCoreHistoryService`) keeps what happened to the users: the identity service writes a record for each create, update and delete, and the auth server writes a `login` record for every token it
 issues ([ADR-0013](docs/adr/0013-the-history-of-the-users.md)). The records have a CRUD of their own, like the users': `POST /api/identity-service/v1/commercial/user-histories/{get/{id}, paged-list, filter-list, search-list, create}`, `PUT`, `DELETE /{id}`
 (`IUserHistoryAppService`; the lists read only the columns of their DTO). Every context of a service has a properties class (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`, `EfCoreOrderDbProperties`, `MongoProductDbProperties`,
 `MongoShipmentDbProperties`) with the table (or collection) prefix, the schema, the provider and the connection name: no setting says which provider runs ([ADR-0012](docs/adr/0012-every-context-is-named-by-its-properties-class.md)).
-The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-HistoryService` (PostgreSQL), `EfCore-OrderService` (PostgreSQL), `Mongo-ProductService` and `Mongo-ShipmentService`.
+The connection strings are `EfCoreIdentityService` (SQL Server), `EfCoreHistoryService` (PostgreSQL), `EfCoreOrderService` (PostgreSQL), `MongoProductService` and `MongoShipmentService`.
 
 ### Environments ([ADR-0016](docs/adr/0016-environments-of-the-abc-sample.md))
 
@@ -259,8 +259,8 @@ The RabbitMQ management page (`localhost:15672`) shows the queues `ABC_<Service>
 |---|---|---|---|
 | identity | `User` (EF Core, SQL Server `Abc_Identity_Dev`) | `UserHistory` (EF Core, PostgreSQL `Abc_History_Dev`) | a user is created, changed or deleted; the auth server issues a token (`login`) |
 | order | `Order` (EF Core, PostgreSQL `Abc_Order_Dev`) | | |
-| product | `Product` (MongoDB `Mongo-ProductService`, `Abc_Product_Dev`) | `ProductStockHistory` (MongoDB `Mongo-StockService`, `Abc_Stock_Dev`, registered under the key `stock`) | a product is created, or an update changes its stock |
+| product | `Product` (MongoDB `MongoProductService`, `Abc_Product_Dev`) | `ProductStockHistory` (MongoDB `MongoStockService`, `Abc_Stock_Dev`, registered under the key `stock`) | a product is created, or an update changes its stock |
 | shipment | `Shipment` (MongoDB `Abc_Shipment_Dev`, project `Abc.ShipmentService.MongoDB`) | `ShipmentHistory` (EF Core, PostgreSQL `Abc_ShipmentHistory_Dev`, project `Abc.ShipmentService.EntityFrameworkCore`) | a shipment is delivered (`delivered`) or returned (`failed`) |
 
 Each history has the CRUD of its entity: `POST .../user-histories`, `.../product-stock-histories`, `.../shipment-histories` with `get/{id}`, `paged-list`, `filter-list`, `search-list`, `create`, then `PUT` and `DELETE /{id}`. The connection strings of the new stores are
-`Mongo-StockService` and `EfCore-ShipmentHistoryService`.
+`MongoStockService` and `EfCoreShipmentHistoryService`.

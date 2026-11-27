@@ -5,7 +5,7 @@ public static class MongoStockDbProperties
 {
     public static string CollectionPrefix { get; set; } = string.Empty;
 
-    public const string ConnectionStringName = "Mongo-StockService";
+    public const string ConnectionStringName = "MongoStockService";
 
     /// <summary>The key the stock database is registered under: the products' is the one without a key.</summary>
     public const string ServiceKey = "stock";

@@ -12,7 +12,7 @@ namespace Hsx.TextNormalizerService.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the text normalizer service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo-TextNormalizerService</c>, and its readiness check), the mappings and the repositories, and the start step that makes the indexes.
+    /// Registers what the text normalizer service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:MongoTextNormalizerService</c>, and its readiness check), the mappings and the repositories, and the start step that makes the indexes.
     /// </summary>
     public static IServiceCollection AddTextNormalizerPersistence(this IServiceCollection services, IConfiguration configuration)
     {

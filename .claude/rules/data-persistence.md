@@ -29,4 +29,6 @@ paths:
 - **MongoDB transactions are `MongoUnitOfWork`** and the `...InTransactionAsync` methods of `IMongoRepository`, for a replica set only ([ADR-0163](../../docs/adr/0163-mongodb-transactions-are-a-unit-of-work-and-a-write-of-many-without-one-is-all-or-none-as-far-as-a-document-store-can.md)): the plain many-methods need no transaction and do what a document store can; a test of a transaction runs on `MongoReplicaSetFixture`.
 - **`tlsCAFile` of a MongoDB connection string is applied by `MongoOptions.Apply`** because the .NET driver ignores it ([ADR-0167](../../docs/adr/0167-the-tlscafile-of-a-mongodb-connection-string-is-applied-by-the-framework-because-the-net-driver-ignores-it.md)): the server certificate must chain to the CA of the file and match the host; `tlsInsecure` is the only way to turn the check off; a test of it uses a real MongoDB with TLS (`MongoTlsFixture`).
 
-Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131, ADR-0136, ADR-0148, ADR-0150, ADR-0162, ADR-0163, ADR-0167.
+- **The name of a connection string is letters and digits** (`MongoContentService`, `EfCoreIdentityService`), never with a dash: it is also an environment variable (ADR-0168).
+
+Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131, ADR-0136, ADR-0148, ADR-0150, ADR-0162, ADR-0163, ADR-0167, ADR-0168.

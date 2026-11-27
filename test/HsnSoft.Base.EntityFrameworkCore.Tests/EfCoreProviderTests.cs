@@ -32,12 +32,12 @@ public sealed class EfCoreProviderTests
 
     private static void Both(EfCoreProviderOptions providers) => providers.Add(new FakeProvider("alpha")).Add(new FakeProvider("beta"));
 
-    private static readonly IConfiguration s_connections = Configuration(("ConnectionStrings:EfCore-A", "Data Source=a.db"), ("ConnectionStrings:EfCore-B", "Data Source=b.db"));
+    private static readonly IConfiguration s_connections = Configuration(("ConnectionStrings:EfCoreA", "Data Source=a.db"), ("ConnectionStrings:EfCoreB", "Data Source=b.db"));
 
     [Theory]
-    [InlineData("alpha", "EfCore-A", "Data Source=a.db")]
-    [InlineData("BETA", "EfCore-B", "Data Source=b.db")]
-    [InlineData(" beta ", "EfCore-A", "Data Source=a.db")]
+    [InlineData("alpha", "EfCoreA", "Data Source=a.db")]
+    [InlineData("BETA", "EfCoreB", "Data Source=b.db")]
+    [InlineData(" beta ", "EfCoreA", "Data Source=a.db")]
     public void TheProviderAndTheConnectionName_AreWhatTheCodeSays(string provider, string connectionName, string expected)
     {
         IServiceCollection services = new ServiceCollection().AddLogging().AddBaseEfCore<ProviderContext>(s_connections, Both, provider, connectionName);
@@ -48,7 +48,7 @@ public sealed class EfCoreProviderTests
     [Fact]
     public void TheCheckIsNamedAfterTheProvider_AndIsReady()
     {
-        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "EfCore-B");
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "EfCoreB");
         using ServiceProvider provider = services.BuildServiceProvider();
 
         HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
@@ -61,9 +61,9 @@ public sealed class EfCoreProviderTests
     public void ASecondContextOnTheSameProvider_HasACheckNamedAfterItToo()
     {
         IServiceCollection services = new ServiceCollection().AddLogging()
-            .AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "EfCore-B")
-            .AddBaseEfCore<OtherContext>(s_connections, Both, "beta", "EfCore-A")
-            .AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", "EfCore-A");
+            .AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "EfCoreB")
+            .AddBaseEfCore<OtherContext>(s_connections, Both, "beta", "EfCoreA")
+            .AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", "EfCoreA");
         using ServiceProvider provider = services.BuildServiceProvider();
 
         string[] names = [.. provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations.Select(registration => registration.Name)];
@@ -85,9 +85,9 @@ public sealed class EfCoreProviderTests
     [Fact]
     public void TheMistakes_AreToldWithWhatIsOffered()
     {
-        InvalidOperationException unknown = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, "oracle", "EfCore-A"));
+        InvalidOperationException unknown = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, "oracle", "EfCoreA"));
         InvalidOperationException noConnection = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "Missing"));
-        InvalidOperationException none = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, _ => { }, "alpha", "EfCore-A"));
+        InvalidOperationException none = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, _ => { }, "alpha", "EfCoreA"));
 
         Assert.Contains("'oracle'", unknown.Message, StringComparison.Ordinal);
         Assert.Contains("alpha, beta", unknown.Message, StringComparison.Ordinal);
@@ -98,10 +98,10 @@ public sealed class EfCoreProviderTests
     [Fact]
     public void NullAndBlankArguments_AreRefused()
     {
-        Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", "EfCore-A"));
-        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(null!, Both, "alpha", "EfCore-A"));
-        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, null!, "alpha", "EfCore-A"));
-        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, " ", "EfCore-A"));
+        Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", "EfCoreA"));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(null!, Both, "alpha", "EfCoreA"));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, null!, "alpha", "EfCoreA"));
+        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, " ", "EfCoreA"));
         Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", " "));
         Assert.Throws<ArgumentNullException>(() => new EfCoreProviderOptions().Add(null!));
     }

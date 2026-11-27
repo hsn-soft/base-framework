@@ -12,7 +12,7 @@ namespace Abc.ProductService.MongoDB;
 public static class StockMongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the stock history of the product service on its own MongoDB (<c>ConnectionStrings:Mongo-StockService</c>, under the key <see cref="MongoStockDbProperties.ServiceKey"/>, with its readiness check), beside the one of
+    /// Registers the stock history of the product service on its own MongoDB (<c>ConnectionStrings:MongoStockService</c>, under the key <see cref="MongoStockDbProperties.ServiceKey"/>, with its readiness check), beside the one of
     /// <see cref="MongoServiceCollectionExtensions.AddProductPersistence"/>, with the mapping and the repository.
     /// </summary>
     public static IServiceCollection AddProductStockPersistence(this IServiceCollection services, IConfiguration configuration)

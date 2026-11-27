@@ -40,7 +40,7 @@ namespace Hsx.IdentityService.EntityFrameworkCore;
 public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers what the identity service needs of PostgreSQL: the <see cref="IdentityServiceDbContext"/> on the provider and the connection string that <see cref="EfCoreDbProperties"/> names (<c>ConnectionStrings:EfCore-IdentityService</c>),
+    /// Registers what the identity service needs of PostgreSQL: the <see cref="IdentityServiceDbContext"/> on the provider and the connection string that <see cref="EfCoreDbProperties"/> names (<c>ConnectionStrings:EfCoreIdentityService</c>),
     /// with its readiness check, the repository of every entity (each also as the generic <c>IRepository</c> of its entity) and the unit of work. The context itself is used by the repositories and the seeders only. It prepares nothing: the host that owns the database adds <see cref="AddServiceEfCoreDatabaseStartup"/>.
     /// </summary>
     public static IServiceCollection AddServiceEfCoreDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)

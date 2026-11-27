@@ -15,7 +15,7 @@ public static class EfCoreServiceCollectionExtensions
 {
     /// <summary>
     /// Registers what the identity service needs of its database: the <c>IdentityDbContext</c> on the provider and the connection string that <see cref="EfCoreIdentityDbProperties"/> names (SQL Server,
-    /// <c>ConnectionStrings:EfCore-IdentityService</c>), with its readiness check, the tenants of the rows (<c>AddBaseMultiTenancyEntityFramework</c>) and the repositories.
+    /// <c>ConnectionStrings:EfCoreIdentityService</c>), with its readiness check, the tenants of the rows (<c>AddBaseMultiTenancyEntityFramework</c>) and the repositories.
     /// </summary>
     public static IServiceCollection AddIdentityPersistence(this IServiceCollection services, IConfiguration configuration)
     {
